@@ -1,49 +1,51 @@
 @charset "UTF-8";
 
-
 /* Binde Stylesheet für JavaScript-Gimmicks ein */
 
 @import url(javascript.css);
 
-
 /* Allgemeines */
 
 p, ul, ol, dl, div, th, td {
-	font-size:15px;
-}
-#kopf-down, .updown, #bottom {
-	display:none;
+  font-size: 16px;
 }
 
+#kopf-down, .updown, #bottom {
+  display: none;
+}
 
 /* Threadliste (Forumshauptseite und Thread-Ansicht) */
 
 #root {
-	margin-left:0;
-	padding-left:0;
-	white-space:nowrap;
+  margin-left: 0;
+  padding-left: 0;
+  white-space: nowrap;
 }
-#root .thread-start {
-	margin-bottom:20px;
-}
-#root ul {
-	margin-left:0;
-	padding-left:0;
-}
-#root ul ul {
-	margin-bottom:0;
-	margin-left:30px;
-	padding-left:0;
-	list-style-image:url(http://src.selfhtml.org/dok.gif);
-}
-.function-link-mark-interesting, .function-link-mark-visited {
-	display:none;
-}
-#root li {
 
+#root .thread-start {
+  margin-bottom: 20px;
 }
+
+#root ul {
+  margin-left: 0;
+  padding-left: 0;
+}
+
+#root ul ul {
+  margin-bottom: 0;
+  margin-left: 30px;
+  padding-left: 0;
+  list-style-image: url(http://src.selfhtml.org/dok.gif);
+}
+
+.function-link-mark-interesting, .function-link-mark-visited {
+  display: none;
+}
+
+#root li {}
+
 #root a:visited {
-	color:#aaa;
+  color: #aaa;
 }
 
 
@@ -73,60 +75,71 @@ p, ul, ol, dl, div, th, td {
 #aktuellenachrichten,
 #mitmachen,
 #altenachrichten {
-	display:none;
+  display: none;
 }
 
 #selfforum-hauptseite #kopf, #selfforum-hauptseite #kopf tr {
-	display:block;
+  display: block;
 }
+
 #selfforum-hauptseite #kopf {
-	position:relative;
-	background-color:transparent;
+  position: relative;
+  background-color: transparent;
 }
+
 #selfforum-hauptseite #kopf-menue {
-	display:block;
-	position:absolute;
-	top:0;
-	right:0;
-	width:17em;
-	padding:0;
-	border:1px solid #aaa;
-	background-color:#f0f0f0;
+  display: block;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 17em;
+  padding: 0;
+  border: 1px solid #aaa;
+  background-color: #f0f0f0;
 }
+
 #selfforum-hauptseite #kopf-menue2 {
-	padding:5px; background-color:transparent;
+  padding: 5px;
+  background-color: transparent;
 }
-#selfforum-hauptseite #quicklinks ul, #selfforum-hauptseite #optionen ul {
-	margin:0; padding:0;
+
+#selfforum-hauptseite #quicklinks ul,
+#selfforum-hauptseite #optionen ul {
+  margin: 0;
+  padding: 0;
 }
-#selfforum-hauptseite #quicklinks li, #selfforum-hauptseite #optionen li {
-	margin:0 0 3px 0;
+
+#selfforum-hauptseite #quicklinks li,
+#selfforum-hauptseite #optionen li {
+  margin: 0 0 3px 0;
 }
+
 #selfforum-hauptseite #kopf-haupt {
-	display:block;
-	padding:0 1em;
-	margin-right:18em;
-	border:1px solid #aaa;
-	background-color:#fafafa;
+  display: block;
+  padding: 0 1em;
+  margin-right: 18em;
+  border: 1px solid #aaa;
+  background-color: #fafafa;
 }
-#selfforum-hauptseite #kopf-haupt ul, #selfforum-hauptseite #kopf-haupt p {
-	margin:0.5em 0;
+
+#selfforum-hauptseite #kopf-haupt ul,
+#selfforum-hauptseite #kopf-haupt p {
+  margin: 0.5em 0;
 }
 
 /*
 #messageoftheday {
-	border-style:none;
-	margin:1em 0 0 0;
-	padding:0;
+  border-style: none;
+  margin: 1em 0 0 0;
+  padding: 0;
 }
 */
-
 
 /* Postingansicht */
 
 #selfforum-nachricht body {
-	margin:0;
-	padding:2em;
+  margin: 0;
+  padding: 2em;
 }
 
 #selfforum-nachricht #kopf-seitentyp,
@@ -135,23 +148,28 @@ p, ul, ol, dl, div, th, td {
 #nachricht-antworten,
 #doppelpostinghinweis,
 #formular-charta {
-	display:none;
+  display: none;
 }
 
 #selfforum-nachricht #kopf-titel {
-	display:block;
-	padding:10px;
+  display: block;
+  padding: 10px;
 }
+
 #selfforum-nachricht #kopf-titel h1 {
-	display:block; margin:0; font-size:18px;
+  display: block;
+  margin: 0;
+  font-size: 18px;
 }
+
 #nachricht-bezug, #nachricht-autor {
-	margin:1em 0;
+  margin: 1em 0;
 }
 
 #nachricht-text, textarea#body {
-	font-family:"consolas", "bitstream vera sans mono", monospace;
+  font-family: "monaco", "consolas", "bitstream vera sans mono", "courier new", monospace;
 }
+
 #nachricht-text {
-	max-width:55em;
+  max-width: 55em;
 }
