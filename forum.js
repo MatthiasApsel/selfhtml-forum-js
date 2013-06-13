@@ -4,710 +4,627 @@ Author: Mathias Schäfer (molily)
 Lizenz: MIT License
 */
 
-/* Kodierung: UTF-8 */
+// (function () {
 
-(function () {
+'use strict';
 
 /* #################################################################################### */
 
-/* Prototypische Erweiterungen */
-
-/* Statisches forEach für Objects (Hashes) */
-
-if (!Object.forEach) {
-  Object.forEach = function f_Object_forEach (object, func) {
-    for (var property in object) {
-      if (object.hasOwnProperty(property)) {
-        func.call(object, property, object[property]);
-      }
-    }
-  };
-}
-
-/* forEach für Listen-Typen */
-
-(function () {
-  var forEach = function f_Enumerable_forEach (func) {
-    if (typeof func != "function") throw new TypeError();
-    var len = this.length;
-    for (var i = 0; i < len; i++) {
-      func.call(this, this[i], i);
-    }
-  };
-
-  if (!Array.prototype.forEach) {
-    Array.prototype.forEach = forEach;
-  }
-
-  if (!NodeList.prototype.forEach) {
-    NodeList.prototype.forEach = forEach;
-  }
-
-  /* Opera 10 Fix */
-  if (document.querySelectorAll) {
-    var nodeList = document.querySelectorAll(":root");
-    if (!nodeList.forEach) {
-      /* Try to augment the StaticNodeList prototype */
-      nodeList.constructor.prototype.forEach = forEach;
-    }
-  }
-})();
-
-Array.convert = function f_Array_convert (obj) {
-  return Array.prototype.slice.apply(obj);
-};
-
-Function.prototype.curry = function f_Function_prototype_curry () {
-  if (arguments.length === 0) {
-    return this;
-  }
-  var method = this, args = Array.convert(arguments);
-  return function () {
-    return method.apply(this, args.concat(Array.convert(arguments)));
-  };
-};
-
-String.prototype.escapeHTML = function f_String_prototype_escapeHTML () {
-  return this.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&lt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-};
-
-/* HTML-Elemente */
-
-Element.prototype.getElementByXPath = function f_Element_prototype_getElementByXPath (xpathExpression) {
-  try {
-    return document.evaluate(xpathExpression, this, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-  } catch (e) {
-    console.log(xpathExpression, e);
+var forEach = function (object, func) {
+  for (var property in object) {
+    func.call(object, property, object[property]);
   }
 };
 
-Element.prototype.getElementsByXPath = function f_Element_prototype_getElementsByXPath (xpathExpression) {
-  try {
-    return document.evaluate(xpathExpression, this, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-  } catch (e) {
-    console.log(xpathExpression, e);
-  }
+var escapeHTML = function (string) {
+  return string
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&lt;')
+    .replace(/'/g, '&quot;')
+    .replace(/'/g, '&#39;');
 };
 
-/* Klassen-Helferfunktionen */
+var slice = Array.prototype.slice;
 
-(function () {
-  var regexpCache = {};
-  var p = Element.prototype;
-  p.toggleClass = function Element_prototype_toggleClass (className) {
-    if (this.hasClass(className)) {
-      this.removeClass(className);
-    } else {
-      this.addClass(className);
-    }
-  };
-  p.addClass = function Element_prototype_addClass (className) {
-    if (!this.hasClass(className)) {
-      this.className += (this.className ? " " : "") + className;
-    }
-  };
-  p.removeClass = function Element_prototype_removeClass (className) {
-    this.className = this.className.replace(new RegExp("(^|\\s)" + className + "(\\s|$)"), "$2");
-  };
-  p.hasClass = function Element_prototype_hasClass (className) {
-    return (" " + this.className + " ").indexOf(" " + className + " ") > -1;
-  };
-  delete p;
-})();
-
-/* XPath-Ergebnisse */
-
-XPathResult.prototype.forEach = function f_XPathResult_prototype_forEach (func) {
-  var node,
-    i = 0,
-    iterator = this.resultType == XPathResult.ORDERED_NODE_ITERATOR_TYPE ? 'iterateNext' : 'snapshotItem';
-  while (node = this[iterator](i++)) {
-    func(node);
-  }
-};
-
-XPathResult.prototype.toArray = function f_XPathResult_prototype_toArray () {
-  var arr = [],
-    node,
-    i = 0,
-    iterator = this.resultType == XPathResult.ORDERED_NODE_ITERATOR_TYPE ? 'iterateNext' : 'snapshotItem';
-  while (node = this[iterator](i++)) {
-    arr.push(node);
-  }
-  return arr;
+Array.from = function (list) {
+  return slice.call(list);
 };
 
 /* #################################################################################### */
 
-/* SELFHTML- und Forums-Namensraum */
+var Modules = {};
 
-var SELFHTML = {};
+Modules.queue = [];
 
-SELFHTML.Forum = {};
-
-/* #################################################################################### */
-
-/* Browser-Unterstützung */
-
-SELFHTML.Forum.Support = {
-  querySelectorAll : !!(document.querySelector && document.querySelectorAll),
-  getElementsByClassName : !!document.getElementsByClassName
+Modules.add = function (module) {
+  Modules.queue.push(module);
 };
 
-/* #################################################################################### */
-
-/* Häufige XPath-Abfragefunktionen */
-
-SELFHTML.Forum.getThreadStart = function SELFHTML_Forum_getThreadStart (li) {
-  return li.getElementByXPath("ancestor::li[contains(@class, 'thread-start')]");
-};
-
-/* #################################################################################### */
-
-/* Modul-Initialisierung */
-
-SELFHTML.Forum.Modules = {};
-
-SELFHTML.Forum.Modules.queue = [];
-
-SELFHTML.Forum.Modules.add = function f_Modules_add (documentType, module) {
-  SELFHTML.Forum.Modules.queue.push({
-    documentType : documentType,
-    module : module
-  });
-};
-
-SELFHTML.Forum.Modules.init = function f_Modules_init () {
-  SELFHTML.Forum.Modules.queue.forEach(function f_Modules_queue_forEach (obj) {
-    if (document.body.id == "selfforum-" + obj.documentType || obj.documentType == "all") {
-      obj.module.init();
+Modules.init = function () {
+  Modules.queue.forEach(function (module) {
+    if (module.documentType == 'all' || document.body.id == 'selfforum-' + module.documentType) {
+      module.init();
     }
   });
 };
 
-document.addEventListener("DOMContentLoaded", SELFHTML.Forum.Modules.init, false);
+document.addEventListener('DOMContentLoaded', Modules.init, false);
 
 /* #################################################################################### */
 
-/* Globale Initialisierung */
+var Forum = {};
 
-SELFHTML.Forum.init = function f_Init () {
-  SELFHTML.Forum.ready = true;
+Forum.documentType = 'all';
+
+Forum.init = function () {
+  Forum.ownName = null;
+  Forum.postingsByAuthor = {};
+  Forum.threadStartsByAuthor = {};
+  Forum.ownPostings = [];
+  Forum.postingsByCategory = {};
 };
 
-SELFHTML.Forum.Modules.add("all", SELFHTML.Forum);
-
-/* #################################################################################### */
-
-/* Initialisierung Hauptseite */
-
-SELFHTML.Forum.Hauptseite = {};
-
-SELFHTML.Forum.Hauptseite.init = function f_Hauptseite_init () {
-  SELFHTML.Forum.threadList = document.getElementById("root");
+Forum.getThreadStart = function (li) {
+  var parent;
+  while (parent = li.parentNode) {
+    if (parent.tagName == 'LI' && parent.classList.contains('thread-start')) {
+      return parent;
+    }
+  }
 };
 
-SELFHTML.Forum.Modules.add("hauptseite", SELFHTML.Forum.Hauptseite);
+Modules.add(Forum);
 
 /* #################################################################################### */
 
-/* Thread List Cache */
+var MainPage = {};
 
-SELFHTML.Forum.ThreadListCache = {};
+MainPage.documentType = 'hauptseite';
 
-SELFHTML.Forum.ThreadListCache.init = function f_ThreadListCache_init () {
+MainPage.init = function () {
+  Forum.threadList = document.getElementById('root');
+};
 
-  var F = SELFHTML.Forum,
-    Su = F.Support,
-    threadList = F.threadList,
+Modules.add(MainPage);
 
-    postingsByAuthor = (F.postingsByAuthor = {}),
-    threadStartsByAuthor = (F.threadStartsByAuthor = {}),
-    ownPostings = (F.ownPostings = []),
-    postingsByCategory = (F.postingsByCategory = {});
+/* #################################################################################### */
 
-  if (Su.getElementsByClassName) {
-    //console.log('ThreadListCache: getElementsByClassName');
-    authorSpans = threadList.getElementsByClassName("author");
-  } else if (Su.querySelectorAll) {
-    //console.log('ThreadListCache: querySelectorAll');
-    authorSpans = threadList.querySelectorAll(".author");
+var ThreadCache = {};
+
+ThreadCache.documentType = 'hauptseite';
+
+ThreadCache.init = function () {
+  var elements = Forum.threadList.querySelectorAll('.author');
+  elements = Array.from(elements);
+  elements.forEach(ThreadCache.analyzePosting);
+};
+
+Modules.add(ThreadCache);
+
+ThreadCache.analyzePosting = function (authorSpan) {
+  var author = authorSpan.textContent,
+    postingSpan = authorSpan.parentNode,
+    li = postingSpan.parentNode,
+    parentLi = li.parentNode.parentNode;
+
+  // Save own postings
+  if (li.classList.contains('own-posting')) {
+    Forum.ownPostings.push(li);
+    // Save own name
+    if (!Forum.ownName) {
+      Forum.ownName = author;
+    }
+  }
+
+  // Save author
+  var postings = Forum.postingsByAuthor[author];
+  if (!postings) {
+    postings = Forum.postingsByAuthor[author] = [];
+  }
+  postings.push(li);
+
+  // Save thread start
+  if (parentLi.classList.contains('thread-start')) {
+    var threadStarts = Forum.threadStartsByAuthor[author];
+    if (!threadStarts) {
+      threadStarts = Forum.threadStartsByAuthor[author] = []
+    }
+    threadStarts.push(parentLi);
+  }
+
+  // Save category
+  var category = postingSpan
+    .firstChild // span.subject
+    .firstChild // span.category
+    .childNodes[1] // second text node
+    .nodeValue;
+  var postings = Forum.postingsByCategory[category];
+  if (!postings) {
+    postings = Forum.postingsByCategory[category] = [];
+  }
+  postings.push(li);
+
+};
+
+/* #################################################################################### */
+
+var Menu = {};
+
+Menu.documentType = 'hauptseite';
+
+Menu.init = function () {
+  Menu.target = document.getElementById('context-menu-title');
+  Menu.visible = false;
+  Menu.links = null;
+  Forum.threadList.addEventListener('click', Menu.toggle, false);
+  Forum.threadList.addEventListener('mouseenter', Menu.threadListMouseEnter, true);
+};
+
+Modules.add(Menu);
+
+Menu.addLink = function (name, handler) {
+  var args = [].slice.call(arguments, 2);
+  var curriedHandler = function () {
+    handler.apply(null, args);
+  };
+  Menu.links.push({
+    name: name,
+    handler: curriedHandler
+  });
+};
+
+Menu.addAuthorLinks = function (target) {
+  var authorName = target.textContent,
+    isOwnPosting = target.classList.contains('own-posting'),
+    isWhitelisted = target.classList.contains('whitelist');
+
+  Menu.addLink(
+    'Filtere nach Autor',
+    Filter.filterByAuthor,
+    authorName
+  );
+
+  if (isWhitelisted) {
+    Menu.addLink(
+      'Autor von der Whitelist löschen',
+      Config.removeFromWhiteList,
+      authorName
+    );
+  } else if (!isOwnPosting) {
+    Menu.addLink(
+      'Autor zur Whitelist hinzufügen',
+      Config.addToWhiteList,
+      authorName
+    );
+  }
+
+  if (!isOwnPosting) {
+    Menu.addLink(
+      'Autor zur Blacklist hinzufügen',
+      Config.addToBlackList,
+      authorName
+    );
+  }
+
+  Menu.addLink(
+    'Zeige Autoren-Statistik',
+    Stats.show,
+    'author'
+  );
+};
+
+Menu.addCategoryLinks = function (target) {
+  var categoryName = target.childNodes[1].nodeValue,
+    isNormalCategory = target.classList.contains('category');
+
+  Menu.addLink(
+    'Filtere nach Themenbereich',
+    Filter.filterByCategory,
+    categoryName
+  );
+
+  if (isNormalCategory) {
+    Menu.addLink(
+      'Themenbereich hervorheben',
+      Config.addToHighlightedCategories,
+      categoryName
+    );
   } else {
-    //console.log('ThreadListCache: getElementsByXPath');
-    authorSpans = threadList.getElementsByXPath("descendant::span[@class = 'author']").toArray();
+    Menu.addLink(
+      'Themenbereich nicht mehr hervorheben',
+      Config.removeFromHighlightedCategories,
+      categoryName
+    );
   }
 
-  for (var i = 0, length = authorSpans.length; i < length; i++) {
+  Menu.addLink(
+    'Zeige Themenbereich-Statistik',
+    Stats.show,
+    'category'
+  );
+};
 
-    var authorSpan = authorSpans[i],
-      authorName = authorSpan.firstChild.nodeValue,
-      postingSpan = authorSpan.parentNode,
-      li = postingSpan.parentNode, // TODO: span des Scoring-Filters nicht beachtet!
-      postingId = li.id,
-      parentLi = li.parentNode.parentNode,
-      categoryName;
+Menu.determineLinks = function (target, linkType) {
 
-    /* Save in own postings hash */
-    if (li.hasClass("own-posting")) {
-      ownPostings.push(li);
-      if (!F.ownName) {
-        F.ownName = authorName;
-      }
-    }
+  Menu.links = [];
 
-    /* Save in author hash */
-    (postingsByAuthor[authorName] || (postingsByAuthor[authorName] = [])).push(li);
-
-    /* Save in thread start hash */
-    if (parentLi.hasClass("thread-start")) {
-      (threadStartsByAuthor[authorName] || (threadStartsByAuthor[authorName] = [])).push(parentLi);
-    }
-
-    /* Save in category hash */
-    categoryName = postingSpan
-      .firstChild // span.subject
-      .firstChild // span.category
-      .childNodes[1] // second text node
-      .nodeValue;
-    (postingsByCategory[categoryName] || (postingsByCategory[categoryName] = [])).push(li);
-
+  if (linkType == 'author') {
+    Menu.addAuthorLinks(target);
+  } else if (linkType == 'category') {
+    Menu.addCategoryLinks(target);
   }
 
+  Menu.addLink('Menü ausblenden', Menu.hide);
+
+  return Menu.links;
 };
 
-SELFHTML.Forum.Modules.add("hauptseite", SELFHTML.Forum.ThreadListCache);
-
-/* #################################################################################### */
-
-/* Kontextmenü */
-
-SELFHTML.Forum.ContextMenu = {};
-
-SELFHTML.Forum.ContextMenu.init = function f_ContextMenu_init () {
-
-  var F = SELFHTML.Forum, M = F.ContextMenu;
-  M.target = document.getElementById("contextMenuTitle");
-  F.threadList.addEventListener("click", M.toggle, false);
-  F.threadList.addEventListener("mouseover", M.threadListMouseOver, true);
-
-};
-
-SELFHTML.Forum.Modules.add("hauptseite", SELFHTML.Forum.ContextMenu);
-
-SELFHTML.Forum.ContextMenu.visible = false;
-
-SELFHTML.Forum.ContextMenu.getLinks = function f_ContextMenu_getLinks (target, linkType) {
-
-  var F = SELFHTML.Forum, M = F.ContextMenu, C = F.Config, Fi = F.Filter, S = F.Statistics,
-    links = {};
-
-  if (linkType == "author") {
-
-    var authorName = target.firstChild.nodeValue,
-      isOwnPosting = target.hasClass("own-posting"),
-      isWhitelisted = target.hasClass("whitelist")
-
-    links["Filtere nach Autor"] = Fi.filterByAuthor.curry(authorName);
-
-    if (isWhitelisted) {
-      links["Autor von der Whitelist löschen"] = C.removeFromWhiteList.curry(authorName);
-    } else if (!isOwnPosting) {
-      links["Autor zur Whitelist hinzufügen"] = C.addToWhiteList.curry(authorName);
-    }
-    if (!isOwnPosting) {
-      links["Autor zur Blacklist hinzufügen"] = C.addToBlackList.curry(authorName);
-    }
-
-    links["Zeige Autoren-Statistik"] = S.show.curry("author");
-
-  } else if (linkType == "category") {
-
-    var categoryName = target.childNodes[1].nodeValue,
-      isNormalCategory = target.hasClass("category");
-
-    links["Filtere nach Themenbereich"] = Fi.filterByCategory.curry(categoryName);
-
-    if (isNormalCategory) {
-      links["Themenbereich hervorheben"] = C.addToHighlightCategories.curry(categoryName);
-    } else {
-      links["Themenbereich nicht mehr hervorheben"] = C.removeFromHighlightCategories.curry(categoryName);
-    }
-
-    links["Zeige Themenbereich-Statistik"] = S.show.curry("category");
-
-  }
-
-  links["Menü ausblenden"] = M.hide;
-
-  return links;
-};
-
-SELFHTML.Forum.ContextMenu.toggle = function f_ContextMenu_toggle (e) {
-
-  var M = SELFHTML.Forum.ContextMenu,
+Menu.toggle = function (e) {
+  var
     target = e.target,
-    isAuthor = target.hasClass("author"),
-    isNormalCategory = target.hasClass("category"),
-    isHighlightedCategory = target.hasClass("cathigh"),
-    linkType = isAuthor ? "author" : (isNormalCategory || isHighlightedCategory ? 'category' : false);
+    isAuthor = target.classList.contains('author'),
+    isNormalCategory = target.classList.contains('category'),
+    isHighlightedCategory = target.classList.contains('cathigh'),
+    isCategory = isNormalCategory || isHighlightedCategory,
+    linkType = isAuthor ? 'author' : (isCategory ? 'category' : false);
 
   if (linkType) {
-    if (M.visible) {
-      M.hide();
+    if (Menu.visible) {
+      Menu.hide();
     } else {
-      var links = M.getLinks(target, linkType);
-      M.show(target, links);
+      Menu.determineLinks(target, linkType);
+      Menu.show(target);
     }
   } else {
-    M.hide();
+    Menu.hide();
   }
 };
 
-SELFHTML.Forum.ContextMenu.show = function f_ContextMenu_show (target, links) {
-  var F = SELFHTML.Forum, M = F.ContextMenu;
-
-  if (M.target) {
-    M.target.removeAttribute("id");
+Menu.show = function (target) {
+  console.log('Menu.show', target);
+  if (Menu.target) {
+    Menu.target.removeAttribute('id');
   }
-  target.id = "contextMenuTitle";
+  target.id = 'context-menu-title';
 
-  var layer = new F.Layer( { id : "contextMenu", tagName : "ul" } ).html(''),
+  var
+    layer = new Layer({ id: 'context-menu', tagName: 'ul' }),
     ul = layer.element;
 
-  Object.forEach(links, function (title, originalHandler) {
+  forEach(Menu.links, function (title, originalHandler) {
     var handler = function (e) {
       e.preventDefault();
-      originalHandler.call(this, e);
+      originalHandler(e);
     };
-    var li = document.createElement("li");
+    var li = document.createElement('li');
     ul.appendChild(li);
-    var a = document.createElement("a");
+    var a = document.createElement('a');
     li.appendChild(a);
-    a.href = "javascript:void(0)";
-    a.addEventListener("click", handler, false);
+    a.href = '';
+    a.addEventListener('click', handler, false);
     a.appendChild(document.createTextNode(title));
   });
-  ul.style.top = (target.offsetTop + target.offsetHeight - 1) + "px";
-  ul.style.left = target.offsetLeft + "px";
+  ul.style.top = (target.offsetTop + target.offsetHeight - 1) + 'px';
+  ul.style.left = target.offsetLeft + 'px';
   layer.show();
-  M.target = target;
+  Menu.target = target;
 };
 
-SELFHTML.Forum.ContextMenu.hide = function f_ContextMenu_hide () {
-  var F = SELFHTML.Forum, M = F.ContextMenu;
-  if (M.target) {
-    M.target.removeAttribute("id");
+Menu.hide = function () {
+  if (Menu.target) {
+    Menu.target.removeAttribute('id');
   }
-  new F.Layer( { id : "contextMenu" } ).hide();
+  var layer = getLayer('context-menu');
+  if (layer) {
+    layer.hide();
+  }
 };
 
-SELFHTML.Forum.ContextMenu.threadListMouseOver = function f_ContextMenu_threadListMouseOver (e) {
-  var target = e.target;
-  if (!target.hasClass("javascript-button") && (target.hasClass("author") || target.hasClass("category") || target.hasClass("cathigh"))) {
-    target.addClass("javascript-button");
+Menu.threadListMouseEnter = function (e) {
+  var
+    target = e.target,
+    classList = target.classList;
+  if (classList.contains('author') || classList.contains('category') ||
+    classList.contains('cathigh')) {
+    classList.add('javascript-button');
   }
 };
 
 /* #################################################################################### */
 
-/* Layer-Abstraktion */
+var layers = {};
 
-SELFHTML.Forum.Layer = function f_Layer_constructor (options) {
+var createLayer = function (options) {
   if (!options || !options.id) {
-    throw new TypeError;
+    throw new TypeError('Layer needs an ID');
   }
-  var layers = arguments.callee.layers || (arguments.callee.layers = {});
-  if (layers[options.id]) {
-    return layers[options.id];
+  var id = options.id;
+  var layer = layers[id];
+  if (layer) {
+    return layer;
   }
+  layer = new Layer(options);
+  layers[id]  = this;
+  return layer;
+};
 
+var getLayer = function (id) {
+  return layers[id];
+};
+
+var Layer = function (options) {
   if (!options.tagName) {
-    return;
-  }
-  if (!options.parent) {
-    options.parent = document.body;
+    options.tagName = 'div';
   }
   var element = document.createElement(options.tagName);
+  this.element = element;
   element.id = options.id;
   if (options.className) {
     element.className = options.className;
   }
+  if (!options.parent) {
+    options.parent = document.body;
+  }
   options.parent.appendChild(element);
-  this.element = element;
-  layers[options.id]  = this;
 };
 
-SELFHTML.Forum.Layer.prototype = {
-  show : function  f_Layer_prototype_show () {
-    if (this.element) {
-      this.element.style.display = "block";
-    }
-    return this;
-  },
-  hide : function f_Layer_prototype_hide () {
-    if (this.element) {
-      this.element.style.display = "none";
-    }
-    return this;
-  },
-  html : function f_Layer_prototype_html (html) {
-    if (this.element) {
-      this.element.innerHTML = html;
-    }
-    return this;
+Layer.prototype.show = function () {
+  if (this.element) {
+    this.element.style.display = 'block';
   }
+  return this;
+};
+
+Layer.prototype.hide = function () {
+  if (this.element) {
+    this.element.style.display = 'none';
+  }
+  return this;
+};
+
+Layer.prototype.remove = function () {
+  var element = this.element;
+  element.parentNode.removeChild(element);
+  layers.splice(layers.indexOf(this), 1);
+  return this;
+};
+
+Layer.prototype.html = function (html) {
+  if (this.element) {
+    this.element.innerHTML = html;
+  }
+  return this;
 };
 
 /* #################################################################################### */
 
-/* Info-Meldung im Header */
+var Filter = {};
 
-SELFHTML.Forum.Info = {};
+Filter.documentType = 'hauptseite';
 
-SELFHTML.Forum.Info.show = function f_Info_show (html) {
-  new SELFHTML.Forum.Layer( { id : "scriptInfo", tagName : "div", parent : document.getElementById("kopf-haupt") } ).html(html).show();
+Filter.init = function () {
+  Filter.active = false;
+  Filter.highlightedPostings = [];
+  Filter.filteredThreads = [];
+  Filter.initCategoryFilter();
 };
 
-SELFHTML.Forum.Info.hide = function f_Info_hide (html) {
-  new SELFHTML.Forum.Layer( { id : "scriptInfo" } ).hide();
-};
+Modules.add(Filter);
 
-/* #################################################################################### */
-
-/* Filter */
-
-SELFHTML.Forum.Filter = {};
-
-SELFHTML.Forum.Filter.init = function f_Filter_init () {
-  var Fi = SELFHTML.Forum.Filter;
-
-  Fi.active = false;
-  Fi.highlightedPostings = [];
-  Fi.filteredThreads = [];
-
-  Fi.initCategoryFilter();
-};
-
-SELFHTML.Forum.Modules.add("hauptseite", SELFHTML.Forum.Filter);
-
-SELFHTML.Forum.Filter.initCategoryFilter = function f_Filter_initCategoryFilter () {
-  var F = SELFHTML.Forum, Fi = F.Filter,
-    form = document.getElementById("themenfilter").getElementsByTagName("form")[0];
-
-  form.addEventListener("submit", function (e) {
-    e.preventDefault();
-    var select = this.elements.lf,
-      selectedOption = select.options[select.selectedIndex],
-      categoryName = selectedOption.text;
-    if (selectedOption.value) {
-      Fi.filterByCategory(categoryName);
-    } else {
-      Fi.remove();
-    }
-  }, false);
-};
-
-SELFHTML.Forum.Filter.filterByAuthor = function f_Filter_filterByAuthor (authorName) {
-  var F = SELFHTML.Forum, Fi = F.Filter;
-
-  Fi.remove();
-  F.ContextMenu.hide();
-
-  var postings = F.postingsByAuthor[authorName];
-  if (postings) {
-    postings.forEach(function f_filterByAuthor_postings_forEach (li) {
-      li.addClass("highlighted");
-      Fi.highlightedPostings.push(li);
-
-      var threadStart = F.getThreadStart(li);
-      threadStart.addClass("contains-filter-postings");
-      Fi.filteredThreads.push(threadStart);
-
-    });
-  }
-
-  // Redraw
-  F.threadList.addClass("filter");
-
-  F.Info.show("Gefiltert nach Autor " + authorName + " &ndash; <a href='javascript:SELFHTML.Forum.Filter.remove()'>Filter entfernen</a>");
-
-  Fi.active = true;
-};
-
-SELFHTML.Forum.Filter.filterByCategory = function f_Filter_filterByCategory (categoryName) {
-  var F = SELFHTML.Forum, Fi = F.Filter;
-
-  Fi.remove();
-  F.ContextMenu.hide();
-
-  var postings = F.postingsByCategory[categoryName];
-  if (postings) {
-    postings.forEach(function f_filterByCategory_postings_forEach (li) {
-      var threadStart = F.getThreadStart(li);
-      threadStart.addClass("contains-filter-postings");
-      Fi.filteredThreads.push(threadStart);
-    });
-  }
-
-  // Redraw
-  F.threadList.addClass("filter");
-
-  F.Info.show("Gefiltert nach Themenbereich " + categoryName + " &ndash; <a href='javascript:SELFHTML.Forum.Filter.remove()'>Filter entfernen</a>");
-
-  Fi.active = true;
-};
-
-SELFHTML.Forum.Filter.remove = function f_Filter_remove () {
-  var F = SELFHTML.Forum, Fi = F.Filter;
-
-  if (!Fi.active) return;
-
-  F.Info.hide();
-
-  var threadStart, li;
-  while (threadStart = Fi.filteredThreads.shift()) {
-    threadStart.removeClass("contains-filter-postings");
-  }
-  while (li = Fi.highlightedPostings.shift()) {
-    li.removeClass("highlighted");
-  }
-
-  // Redraw
-  F.threadList.removeClass("filter");
-
-  Fi.active = false;
-};
-
-/* #################################################################################### */
-
-SELFHTML.Forum.FollowupNotice = {};
-
-SELFHTML.Forum.FollowupNotice.init = function f_FollowupNotice_init () {
-
-  var F = SELFHTML.Forum,
-    Su = F.Support,
-    threadList = F.threadList,
-    newFollowupPostings;
-
-  if (Su.querySelectorAll) {
-    //console.log('FollowupNotice newFollowupPostings: querySelectorAll');
-    newFollowupPostings = threadList.querySelectorAll("li.own-posting > ul > li:not(.visited) > .posting");
+Filter.formSubmit = function (e) {
+  e.preventDefault();
+  var select = this.elements.lf,
+    selectedOption = select.options[select.selectedIndex],
+    categoryName = selectedOption.text;
+  if (selectedOption.value) {
+    Filter.filterByCategory(categoryName);
   } else {
-    //console.log('FollowupNotice newFollowupPostings: getElementsByXPath');
-    newFollowupPostings = threadList
-      .getElementsByXPath("descendant::li[contains(@class, 'own-posting')]/ul/li[not(contains(@class, 'visited'))]")
-      .toArray();
+    Filter.remove();
   }
+}
+
+Filter.initCategoryFilter = function () {
+  var form = document.getElementById('themenfilter').getElementsByTagName('form')[0];
+  form.addEventListener('submit', Filter.formSubmit, false);
+};
+
+Filter.filter = function (infoText) {
+  Menu.hide();
+  Forum.threadList.classList.add('filter');
+  infoText = infoText + ' &ndash; ' +
+    '<a href="" class="remove-posting-filter">Filter entfernen</a>';
+  var layer = createLayer({
+    id: 'filter-status',
+    parent: document.getElementById('beschreibung')
+  });
+  layer.html(infoText).show();
+  layer.element.addEventListener('click', Filter.checkRemoveFilter, false);
+  Filter.active = true;
+};
+
+Filter.filterByAuthor = function (authorName) {
+  Filter.remove();
+  var postings = Forum.postingsByAuthor[authorName];
+  if (postings) {
+    postings.forEach(function (li) {
+      li.classList.add('highlighted');
+      Filter.highlightedPostings.push(li);
+
+      var threadStart = Forum.getThreadStart(li);
+      threadStart.classList.add('contains-filter-postings');
+      Filter.filteredThreads.push(threadStart);
+    });
+  }
+  Filter.filter('Gefiltert nach Autor ' + authorName);
+};
+
+Filter.filterByCategory = function (categoryName) {
+  Filter.remove();
+
+  var postings = Forum.postingsByCategory[categoryName];
+  if (postings) {
+    postings.forEach(function (li) {
+      var threadStart = Forum.getThreadStart(li);
+      threadStart.classList.add('contains-filter-postings');
+      Filter.filteredThreads.push(threadStart);
+    });
+  }
+
+  Filter.filter('Gefiltert nach Themenbereich ' + categoryName);
+};
+
+Filter.checkRemoveFilter = function (e) {
+  if (e.target.classList.contains('remove-posting-filter')) {
+    Filter.remove();
+  }
+};
+
+Filter.remove = function () {
+  if (!Filter.active) return;
+
+  getLayer('filterStatus').hide();
+
+  var threadStart;
+  while (threadStart = Filter.filteredThreads.shift()) {
+    threadStart.classList.remove('contains-filter-postings');
+  }
+  var li;
+  while (li = Filter.highlightedPostings.shift()) {
+    li.classList.remove('highlighted');
+  }
+
+  Forum.threadList.classList.remove('filter');
+
+  Filter.active = false;
+};
+
+/* #################################################################################### */
+
+var AnswerNotice = {};
+
+AnswerNotice.documentType = 'hauptseite';
+
+AnswerNotice.init = function () {
+
+  var
+    selector = 'li.own-posting > ul > li:not(.visited) > .posting',
+    answerElements = Array.from(Forum.threadList.querySelectorAll(selector));
 
   /*
   An welches Element soll die Meldungsbox »Neue Antworten« angehängt werden?
   kopf-menu = Zelle in der linken Spalte in der Kopftabelle
   */
-  var targetId = "kopf-menue",
+  var
+    targetId = 'beschreibung',
     targetElement = document.getElementById(targetId);
   if (!targetElement) return;
 
-  var newFollowups = [];
+  var answers = [];
 
-  newFollowupPostings.forEach(function f_newFollowupNodes_forEach (posting) {
+  answerElements.forEach(function (postingSpan) {
+    var
+      aElement = postingSpan.querySelector('span.subject a'),
+      authorSpan = postingSpan.querySelector('span.author');
 
-    var aElement, author, postingSpan;
-
-    if (Su.querySelectorAll) {
-      //console.log('FollowupNotice newFollowup: querySelectorAll');
-      postingSpan = posting;
-      aElement = posting.querySelector("span.subject a");
-      author = posting.querySelector("span.author");
-    } else {
-      //console.log('FollowupNotice newFollowup: getElementByXPath');
-      postingSpan = posting.getElementByXPath("(span | span/span)[contains(@class, 'posting')]");
-      aElement = postingSpan.getElementByXPath("span[contains(@class, 'subject')]/a");
-      author = postingSpan.getElementByXPath("span[contains(@class, 'author')]");
-    }
-
-    /* Link hat keine visited-Klasse, ist aber in der Browser-History als besucht markiert */
-    if (window.getComputedStyle(aElement, null).outlineStyle == "solid") {
+    // Link is visited
+    if (window.getComputedStyle(aElement).outlineStyle == 'solid') {
       return;
     }
 
-    newFollowups.push({
-      title : aElement.firstChild.nodeValue,
+    answers.push({
+      title : aElement.textContent,
       href : aElement.href,
-      author : author.firstChild.nodeValue
+      author : authorSpan.textContent
     });
-
   });
 
   /* Erzeuge Meldungsbox (div-Element mit h2-Element) */
-  var layer = new F.Layer( { id : "followup-notice", tagName : "div", parent : targetElement } );
+  var layer = createLayer({
+    id: 'answer-notice',
+    tagName: 'div',
+    parent: targetElement
+  });
 
-  var divHTML = "";
-  if (newFollowups.length > 0) {
-    layer.element.className = "new-anwers";
-    divHTML += "<h2>Neue Antworten</h2>";
-    divHTML += "<ul>";
-    newFollowups.forEach(function f_newFollowups_forEach (newFollowup) {
-      divHTML += "<li><a href='" + newFollowup.href + "'>" + newFollowup.title.escapeHTML() + "</a>";
-      divHTML += " von " + newFollowup.author.escapeHTML() + "</li>";
+  var divHTML = '';
+  if (answers.length > 0) {
+    layer.element.className = 'new-answers';
+    divHTML +=
+      '<h2>Neue Antworten</h2>' +
+      '<ul>';
+    answers.forEach(function (answer) {
+      divHTML +=
+        '<li><a href="' + answer.href + '">' +
+        escapeHTML(answer.title) +
+        '</a> von ' +
+        escapeHTML(answer.author) +
+        '</li>';
     });
-    divHTML += "</ul>";
+    divHTML += '</ul>';
   } else {
-    layer.element.className = "no-anwers";
-    divHTML += "<h2>Keine neuen Antworten</h2>";
+    layer.element.className = 'no-answers';
+    divHTML += '<h2>Keine neuen Antworten</h2>';
   }
 
   layer.html(divHTML);
-}
+};
 
-SELFHTML.Forum.Modules.add("hauptseite", SELFHTML.Forum.FollowupNotice);
+Modules.add(AnswerNotice);
 
 /* #################################################################################### */
 
-SELFHTML.Forum.Config = {};
+var Config = {};
 
-SELFHTML.Forum.Config.directives = {
-  "BlackList" : { parameter : "blacklist", type : "list" },
-  "WhiteList" : { parameter : "whitelst", type : "list" },
-  "HighlightCategories" : { parameter : "highlightcats", type : "list" },
-  "SortThreads" : { parameter : "sortthreads", type : "single" }
+Config.documentType = 'hauptseite';
+
+Config.directives = {
+  BlackList: { parameter: 'blacklist', type: 'list' },
+  WhiteList: { parameter: 'whitelst', type: 'list' },
+  HighlightedCategories: { parameter: 'highlightcats', type: 'list' },
+  SortThreads: { parameter: 'sortthreads', type: 'single' }
 };
 
-SELFHTML.Forum.Config.init = function f_Config_init () {
-  var F = SELFHTML.Forum, C = F.Config;
-
-  Object.forEach(C.directives, function (directive, obj) {
-    if (obj.type != "list") return;
-    C["addTo" + directive] = function (value) {
-      C.setValue(directive, value);
-      C.confirmReload();
+Config.init = function () {
+  forEach(Config.directives, function (directive, obj) {
+    if (obj.type != 'list') return;
+    Config['addTo' + directive] = function (value) {
+      Config.setValue(directive, value);
+      Config.confirmReload();
     };
-    C["removeFrom" + directive] = function (value) {
-      C.removeValue(directive, value);
-      C.confirmReload();
+    Config['removeFrom' + directive] = function (value) {
+      Config.removeValue(directive, value);
+      Config.confirmReload();
     };
   });
 };
 
-SELFHTML.Forum.Modules.add("hauptseite", SELFHTML.Forum.Config);
+Modules.add(Config);
 
-SELFHTML.Forum.Config.setValue = function f_Config_setValue (directive, value) {
-  var F = SELFHTML.Forum, C = F.Config, obj = C.directives[directive];
+Config.sendUserConfAction = function (action, directive, value) {
+  var obj = Config.directives[directive];
   if (!obj) return;
-  var uri  = userconf_uri + "?a=setvalue&directive=" + directive + "&" + obj.parameter + "=" + encodeURIComponent(value) +
-    (obj.type == "list" ? "&type=stringlist" : "") + "&unique=" + new Date().getTime();
-  xmlhttp_get_contents(xmlhttp, uri, null, null);
+  var url =
+    window.userconf_uri +
+    '?a=' + action +
+    '&directive=' + directive +
+    '&' + obj.parameter + '=' + encodeURIComponent(value) +
+    (obj.type == 'list' ? '&type=stringlist' : '') +
+    '&unique=' + new Date().getTime();
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', url);
+  xhr.send();
 };
 
-SELFHTML.Forum.Config.removeValue = function f_Config_removeValue (directive, value) {
-  var F = SELFHTML.Forum, C = F.Config, obj = C.directives[directive];
-  if (!obj) return;
-  var uri  = userconf_uri + "?a=removevalue&directive=" + directive + "&" + obj.parameter + "=" + encodeURIComponent(value) +
-    (obj.type == "list" ? "&type=stringlist" : "") + "&unique=" + new Date().getTime();
-  xmlhttp_get_contents(xmlhttp, uri, null, null);
+Config.setValue = function (directive, value) {
+  Config.sendUserConfAction(directive, 'setvalue', value);
 };
 
-SELFHTML.Forum.Config.confirmReload = function f_Config_confirmReload () {
-  var reloadDialog = "Die Einstellung wurde auf dem Server gespeichert. Soll die Forumshauptseite jetzt neu geladen werden?";
+Config.removeValue = function (directive, value) {
+  Config.sendUserConfAction(directive, 'removevalue', value);
+};
+
+Config.confirmReload = function () {
+  var reloadDialog = 'Die Einstellung wurde auf dem Server gespeichert. Soll die Forumshauptseite jetzt neu geladen werden?';
   if (window.confirm(reloadDialog)) {
     location.reload();
   }
@@ -717,112 +634,123 @@ SELFHTML.Forum.Config.confirmReload = function f_Config_confirmReload () {
 
 /* Statistiken */
 
-SELFHTML.Forum.Statistics = {};
+var Stats = {};
 
-SELFHTML.Forum.Statistics.init = function f_Statistics_init (type) {
-  if (typeof type != "string") {
-    arguments.callee("author");
-    arguments.callee("category");
-    return;
-  }
+Stats.documentType = 'hauptseite';
 
-  var F = SELFHTML.Forum, Fi = F.Filter, S = F.Statistics,
-    postingsByType = (type == "author") ? F.postingsByAuthor : F.postingsByCategory,
-    typeName,
-    ranking = [];
+Stats.init = function () {
+  Stats.currentRanking = null;
+  Stats.createRankings();
+};
 
-  Object.forEach(postingsByType, function f_Statistics_ranking_push (typeName, postings) {
-    ranking.push( {
-      "typeName" : typeName,
-      "postingNumber" : postings.length
-    } );
+Stats.createRankings = function () {
+  Stats.authorRanking = Stats.createRanking(Forum.postingsByAuthor);
+  Stats.categoryRanking = Stats.createRanking(Forum.postingsByCategory);
+};
+
+Modules.add(Stats);
+
+Stats.createRanking = function (postings) {
+  var ranking = [];
+
+  forEach(postings, function (name, postings) {
+    ranking.push({
+      name: name,
+      postingNumber: postings.length
+    });
   });
 
-  ranking.sort(function f_Statistics_ranking_sort (a, b) {
-    return a.postingNumber > b.postingNumber ? -1 : 1;
+  ranking.sort(function (a, b) {
+    return b.postingNumber - a.postingNumber;
   });
 
-  if (type == "author") {
-    F.authorRanking = ranking;
-  } else {
-    F.categoryRanking = ranking;
-  }
+  return ranking;
+};
 
-  var html = "<p><a href='javascript:void(0)' class='hide'>Ausblenden</a></p>";
-  html += "<table><tbody>";
-  ranking.forEach(function f_Statistics_ranking_append (obj) {
-    html += "<tr><th><a href='javascript:void(0)'>" + obj.typeName.escapeHTML() + "</th><td>" + obj.postingNumber + "</td></tr>";
+Stats.show = function (type) {
+  Stats.currentType = type;
+  Menu.hide();
+  var ranking = Stats[type + 'Ranking'];
+
+  var html = '<p><a href="" class="hide">Ausblenden</a></p>';
+  html += '<table>';
+  ranking.forEach(function (entry) {
+    html +=
+      '<tr><th><a href="">' +
+      escapeHTML(entry.name) +
+      '</th><td>' +
+      entry.postingNumber +
+      '</td></tr>';
   });
-  html += "</tbody></table>";
+  html += '</table>';
 
-  var layer = new F.Layer( { id : type + "Statistics", tagName : "div", className : "statistics" } );
+  var layer = createLayer({
+    id: 'stats',
+    className: type + 'Stats'
+  });
   layer.html(html);
-
-  layer.element.addEventListener("click", function (e) {
-    e.preventDefault();
-    var target = e.target;
-    if (target.nodeName.toLowerCase() != "a") return;
-    S.hide();
-    if (target.hasClass("hide")) return;
-    var filterFunctionName = "filterBy" + (type == "author" ? "Author" : "Category");
-    Fi[filterFunctionName](target.textContent);
-  }, false);
-
+  layer.element.addEventListener('click', Stats.click, false);
 };
 
-SELFHTML.Forum.Modules.add("hauptseite", SELFHTML.Forum.Statistics);
+Stats.click = function (e) {
+  var target = e.target;
+  if (target.tagName != 'A') return;
+  e.preventDefault();
+  Stats.hide();
+  if (target.classList.contains('hide')) return;
+  var filter;
+  if (Stats.currentType == 'author') {
+    filter = Filter.filterByAuthor;
+  } else if (Stats.currentType == 'category') {
+    filter = Filter.filterByCategory;
+  }
+  if (filter) {
+    filter(target.textContent);
+  }
+}
 
-SELFHTML.Forum.Statistics.show = function f_Statistics_show (type) {
-  var F = SELFHTML.Forum;
-  F.ContextMenu.hide();
-  var layer = new F.Layer( { id : type + "Statistics" } );
-  layer.show();
-  var top = window.pageYOffset + 10,
-    height = window.innerHeight - 10 - 10 - (2 * 5) - 2 - 16;
-  layer.element.style.top = top + "px";
-  layer.element.style.maxHeight = height + "px";
-};
-
-SELFHTML.Forum.Statistics.hide = function f_Statistics_hide () {
-  var F = SELFHTML.Forum;
-  new F.Layer( { id : "categoryStatistics" } ).hide();
-  new F.Layer( { id : "authorStatistics" } ).hide();
+Stats.hide = function () {
+  getLayer('stats').remove();
 };
 
 /* #################################################################################### */
 
-SELFHTML.Forum.Sorting = {};
+var Sorting = {};
 
-SELFHTML.Forum.Sorting.init = function f_Sorting_init () {
-  var sibling = document.getElementById("themenfilter");
-  if (!sibling) return;
-  var elem = document.createElement("div");
-  elem.id = "sortierung";
+Sorting.documentType = 'hauptseite';
+
+Sorting.init = function () {
+  var
+    parentId = 'beschreibung',
+    parent = document.getElementById(parentId);
+  if (!parent) return;
+  var elem = document.createElement('div');
+  elem.id = 'change-thread-sorting';
   elem.innerHTML =
-    "<p><strong>Sortierung der Threads:</strong></p>" +
-    "<ul>" +
-    "<li><label title='Threads nach Eröffnungsposting chronologisch absteigend sortieren (neue Threads oben, alte Threads unten)'><input type='radio' name='sortthreads' value='descending' />&nbsp;Absteigend (Standard)</label></li>" +
-    "<li><label title='Threads nach Eröffnungsposting chronologisch absteigend sortieren (alte Threads oben, neue Threads unten)'><input type='radio' name='sortthreads' value='ascending' />&nbsp;Aufsteigend</label></li>" +
-    "<li><label title='Threads nach dem jüngsten Posting sortieren (Threads mit neuen Postings oben, nicht mehr aktive unten)'><input type='radio' name='sortthreads' value='newestfirst' />&nbsp;Nach jüngstem Posting</label></li>" +
-    "</ul>";
-  elem.addEventListener("click", SELFHTML.Forum.Sorting.change, false);
-  sibling.parentNode.insertBefore(elem, sibling);
+    '<h2>Sortierung der Threads:</h2>' +
+    '<ul>' +
+    '<li><label><input type="radio" name="sorting" value="descending"> Absteigend (Standard)</label></li>' +
+    '<li><label><input type="radio" name="sorting" value="ascending"> Aufsteigend</label></li>' +
+    '<li><label><input type="radio" name="sorting" value="newestfirst"> Nach jüngstem Posting</label></li>' +
+    '</ul>';
+  elem.addEventListener('click', Sorting.change, false);
+  parent.appendChild(elem);
 };
 
-SELFHTML.Forum.Modules.add("hauptseite", SELFHTML.Forum.Sorting);
+Modules.add(Sorting);
 
-SELFHTML.Forum.Sorting.change = function f_Sorting_change (e) {
-  var C = SELFHTML.Forum.Config,
-    target = e.target, targetName = target.nodeName.toLowerCase(),
-    value;
-  if (targetName != "input") {
+Sorting.change = function (e) {
+  var
+    target = e.target,
+    targetName = target.nodeName.toLowerCase();
+  if (targetName != 'input') {
     return;
   }
   e.stopPropagation();
-  C.setValue("SortThreads", target.value);
-  C.confirmReload();
+  Config.setValue('SortThreads', target.value);
+  Config.confirmReload();
 };
 
 /* #################################################################################### */
 
-})();
+// })();
