@@ -66,12 +66,13 @@ Forum.init = function () {
 };
 
 Forum.getThreadStart = function (li) {
-  var parent;
-  while (parent = li.parentNode) {
+  var parent = li;
+  while (parent = parent.parentNode) {
     if (parent.tagName == 'LI' && parent.classList.contains('thread-start')) {
       return parent;
     }
   }
+  return false;
 };
 
 Modules.add(Forum);
@@ -163,13 +164,13 @@ Menu.init = function () {
 
 Modules.add(Menu);
 
-Menu.addLink = function (name, handler) {
+Menu.addLink = function (title, handler) {
   var args = [].slice.call(arguments, 2);
   var curriedHandler = function () {
     handler.apply(null, args);
   };
   Menu.links.push({
-    name: name,
+    title: title,
     handler: curriedHandler
   });
 };
@@ -282,28 +283,29 @@ Menu.toggle = function (e) {
 };
 
 Menu.show = function (target) {
-  console.log('Menu.show', target);
   if (Menu.target) {
     Menu.target.removeAttribute('id');
   }
   target.id = 'context-menu-title';
 
   var
-    layer = new Layer({ id: 'context-menu', tagName: 'ul' }),
+    layer = createLayer({ id: 'context-menu', tagName: 'ul' }),
     ul = layer.element;
 
-  forEach(Menu.links, function (title, originalHandler) {
+  ul.innerHTML = '';
+
+  Menu.links.forEach(function (link) {
     var handler = function (e) {
       e.preventDefault();
-      originalHandler(e);
+      link.handler();
     };
     var li = document.createElement('li');
-    ul.appendChild(li);
     var a = document.createElement('a');
     li.appendChild(a);
     a.href = '';
     a.addEventListener('click', handler, false);
-    a.appendChild(document.createTextNode(title));
+    a.appendChild(document.createTextNode(link.title));
+    ul.appendChild(li);
   });
   ul.style.top = (target.offsetTop + target.offsetHeight - 1) + 'px';
   ul.style.left = target.offsetLeft + 'px';
@@ -345,7 +347,7 @@ var createLayer = function (options) {
     return layer;
   }
   layer = new Layer(options);
-  layers[id]  = this;
+  layers[id] = layer;
   return layer;
 };
 
@@ -475,6 +477,7 @@ Filter.filterByCategory = function (categoryName) {
 };
 
 Filter.checkRemoveFilter = function (e) {
+  e.preventDefault();
   if (e.target.classList.contains('remove-posting-filter')) {
     Filter.remove();
   }
@@ -483,7 +486,7 @@ Filter.checkRemoveFilter = function (e) {
 Filter.remove = function () {
   if (!Filter.active) return;
 
-  getLayer('filterStatus').hide();
+  getLayer('filter-status').hide();
 
   var threadStart;
   while (threadStart = Filter.filteredThreads.shift()) {
@@ -539,6 +542,8 @@ AnswerNotice.init = function () {
     });
   });
 
+  if (answers.length == 0) return;
+
   /* Erzeuge Meldungsbox (div-Element mit h2-Element) */
   var layer = createLayer({
     id: 'answer-notice',
@@ -547,25 +552,18 @@ AnswerNotice.init = function () {
   });
 
   var divHTML = '';
-  if (answers.length > 0) {
-    layer.element.className = 'new-answers';
+  divHTML +=
+    '<h2>Neue Antworten</h2>' +
+    '<ul>';
+  answers.forEach(function (answer) {
     divHTML +=
-      '<h2>Neue Antworten</h2>' +
-      '<ul>';
-    answers.forEach(function (answer) {
-      divHTML +=
-        '<li><a href="' + answer.href + '">' +
-        escapeHTML(answer.title) +
-        '</a> von ' +
-        escapeHTML(answer.author) +
-        '</li>';
-    });
-    divHTML += '</ul>';
-  } else {
-    layer.element.className = 'no-answers';
-    divHTML += '<h2>Keine neuen Antworten</h2>';
-  }
-
+      '<li><a href="' + answer.href + '">' +
+      escapeHTML(answer.title) +
+      '</a> von ' +
+      escapeHTML(answer.author) +
+      '</li>';
+  });
+  divHTML += '</ul>';
   layer.html(divHTML);
 };
 
