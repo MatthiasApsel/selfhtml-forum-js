@@ -4,11 +4,13 @@ Author: Mathias Schäfer (molily)
 Lizenz: MIT License
 */
 
-// (function () {
+(function () {
 
 'use strict';
 
-/* #################################################################################### */
+// ####################################################################################
+
+// Helfer
 
 var forEach = function (object, func) {
   for (var property in object) {
@@ -31,7 +33,9 @@ Array.from = function (list) {
   return slice.call(list);
 };
 
-/* #################################################################################### */
+// ####################################################################################
+
+// Modulverwaltung
 
 var Modules = {};
 
@@ -51,9 +55,12 @@ Modules.init = function () {
 
 document.addEventListener('DOMContentLoaded', Modules.init, false);
 
-/* #################################################################################### */
+// ####################################################################################
+
+// Hauptobjekt mit Caches
 
 var Forum = {};
+Modules.add(Forum);
 
 Forum.documentType = 'all';
 
@@ -75,11 +82,10 @@ Forum.getThreadStart = function (li) {
   return false;
 };
 
-Modules.add(Forum);
-
-/* #################################################################################### */
+// ####################################################################################
 
 var MainPage = {};
+Modules.add(MainPage);
 
 MainPage.documentType = 'hauptseite';
 
@@ -87,11 +93,10 @@ MainPage.init = function () {
   Forum.threadList = document.getElementById('root');
 };
 
-Modules.add(MainPage);
-
-/* #################################################################################### */
+// ####################################################################################
 
 var ThreadCache = {};
+Modules.add(ThreadCache);
 
 ThreadCache.documentType = 'hauptseite';
 
@@ -100,8 +105,6 @@ ThreadCache.init = function () {
   elements = Array.from(elements);
   elements.forEach(ThreadCache.analyzePosting);
 };
-
-Modules.add(ThreadCache);
 
 ThreadCache.analyzePosting = function (authorSpan) {
   var author = authorSpan.textContent,
@@ -140,7 +143,7 @@ ThreadCache.analyzePosting = function (authorSpan) {
     .firstChild // span.category
     .childNodes[1] // second text node
     .nodeValue;
-  var postings = Forum.postingsByCategory[category];
+  postings = Forum.postingsByCategory[category];
   if (!postings) {
     postings = Forum.postingsByCategory[category] = [];
   }
@@ -148,9 +151,10 @@ ThreadCache.analyzePosting = function (authorSpan) {
 
 };
 
-/* #################################################################################### */
+// ####################################################################################
 
 var Menu = {};
+Modules.add(Menu);
 
 Menu.documentType = 'hauptseite';
 
@@ -161,8 +165,6 @@ Menu.init = function () {
   Forum.threadList.addEventListener('click', Menu.toggle, false);
   Forum.threadList.addEventListener('mouseenter', Menu.threadListMouseEnter, true);
 };
-
-Modules.add(Menu);
 
 Menu.addLink = function (title, handler) {
   var args = [].slice.call(arguments, 2);
@@ -256,7 +258,7 @@ Menu.determineLinks = function (target, linkType) {
     Menu.addCategoryLinks(target);
   }
 
-  Menu.addLink('Menü ausblenden', Menu.hide);
+  Menu.addLink('Schließen', Menu.hide);
 
   return Menu.links;
 };
@@ -307,7 +309,7 @@ Menu.show = function (target) {
     a.appendChild(document.createTextNode(link.title));
     ul.appendChild(li);
   });
-  ul.style.top = (target.offsetTop + target.offsetHeight - 1) + 'px';
+  ul.style.top = (target.offsetTop + target.offsetHeight) + 'px';
   ul.style.left = target.offsetLeft + 'px';
   layer.show();
   Menu.target = target;
@@ -333,7 +335,7 @@ Menu.threadListMouseEnter = function (e) {
   }
 };
 
-/* #################################################################################### */
+// ####################################################################################
 
 var layers = {};
 
@@ -388,7 +390,7 @@ Layer.prototype.hide = function () {
 Layer.prototype.remove = function () {
   var element = this.element;
   element.parentNode.removeChild(element);
-  layers.splice(layers.indexOf(this), 1);
+  delete layers[this.element.id];
   return this;
 };
 
@@ -399,9 +401,10 @@ Layer.prototype.html = function (html) {
   return this;
 };
 
-/* #################################################################################### */
+// ####################################################################################
 
 var Filter = {};
+Modules.add(Filter);
 
 Filter.documentType = 'hauptseite';
 
@@ -411,8 +414,6 @@ Filter.init = function () {
   Filter.filteredThreads = [];
   Filter.initCategoryFilter();
 };
-
-Modules.add(Filter);
 
 Filter.formSubmit = function (e) {
   e.preventDefault();
@@ -424,7 +425,7 @@ Filter.formSubmit = function (e) {
   } else {
     Filter.remove();
   }
-}
+};
 
 Filter.initCategoryFilter = function () {
   var form = document.getElementById('themenfilter').getElementsByTagName('form')[0];
@@ -502,9 +503,10 @@ Filter.remove = function () {
   Filter.active = false;
 };
 
-/* #################################################################################### */
+// ####################################################################################
 
 var AnswerNotice = {};
+Modules.add(AnswerNotice);
 
 AnswerNotice.documentType = 'hauptseite';
 
@@ -531,7 +533,7 @@ AnswerNotice.init = function () {
       authorSpan = postingSpan.querySelector('span.author');
 
     // Link is visited
-    if (window.getComputedStyle(aElement).outlineStyle == 'solid') {
+    if (window.getComputedStyle(aElement, null).outlineStyle == 'solid') {
       return;
     }
 
@@ -544,7 +546,7 @@ AnswerNotice.init = function () {
 
   if (answers.length == 0) return;
 
-  /* Erzeuge Meldungsbox (div-Element mit h2-Element) */
+  // Erzeuge Meldungsbox (div-Element mit h2-Element)
   var layer = createLayer({
     id: 'answer-notice',
     tagName: 'div',
@@ -567,13 +569,12 @@ AnswerNotice.init = function () {
   layer.html(divHTML);
 };
 
-Modules.add(AnswerNotice);
-
-/* #################################################################################### */
+// ####################################################################################
 
 var Config = {};
 
 Config.documentType = 'hauptseite';
+Modules.add(Config);
 
 Config.directives = {
   BlackList: { parameter: 'blacklist', type: 'list' },
@@ -595,8 +596,6 @@ Config.init = function () {
     };
   });
 };
-
-Modules.add(Config);
 
 Config.sendUserConfAction = function (action, directive, value) {
   var obj = Config.directives[directive];
@@ -628,11 +627,12 @@ Config.confirmReload = function () {
   }
 };
 
-/* #################################################################################### */
+// ####################################################################################
 
-/* Statistiken */
+// Statistiken
 
 var Stats = {};
+Modules.add(Stats);
 
 Stats.documentType = 'hauptseite';
 
@@ -645,8 +645,6 @@ Stats.createRankings = function () {
   Stats.authorRanking = Stats.createRanking(Forum.postingsByAuthor);
   Stats.categoryRanking = Stats.createRanking(Forum.postingsByCategory);
 };
-
-Modules.add(Stats);
 
 Stats.createRanking = function (postings) {
   var ranking = [];
@@ -670,7 +668,7 @@ Stats.show = function (type) {
   Menu.hide();
   var ranking = Stats[type + 'Ranking'];
 
-  var html = '<p><a href="" class="hide">Ausblenden</a></p>';
+  var html = '<p class="hide"><a href="" class="hide">Statistik schließen</a></p>';
   html += '<table>';
   ranking.forEach(function (entry) {
     html +=
@@ -686,8 +684,8 @@ Stats.show = function (type) {
     id: 'stats',
     className: type + 'Stats'
   });
-  layer.html(html);
   layer.element.addEventListener('click', Stats.click, false);
+  layer.html(html).show();
 };
 
 Stats.click = function (e) {
@@ -705,15 +703,16 @@ Stats.click = function (e) {
   if (filter) {
     filter(target.textContent);
   }
-}
+};
 
 Stats.hide = function () {
   getLayer('stats').remove();
 };
 
-/* #################################################################################### */
+// ####################################################################################
 
 var Sorting = {};
+Modules.add(Sorting);
 
 Sorting.documentType = 'hauptseite';
 
@@ -735,8 +734,6 @@ Sorting.init = function () {
   parent.appendChild(elem);
 };
 
-Modules.add(Sorting);
-
 Sorting.change = function (e) {
   var
     target = e.target,
@@ -749,6 +746,6 @@ Sorting.change = function (e) {
   Config.confirmReload();
 };
 
-/* #################################################################################### */
+// ####################################################################################
 
-// })();
+})();
