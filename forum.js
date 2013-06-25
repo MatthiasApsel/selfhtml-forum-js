@@ -183,20 +183,20 @@ Menu.addAuthorLinks = function (target) {
     isWhitelisted = target.classList.contains('whitelist');
 
   Menu.addLink(
-    'Filtere nach Autor',
+    'Filtere nach Autor/in',
     Filter.filterByAuthor,
     authorName
   );
 
   if (isWhitelisted) {
     Menu.addLink(
-      'Autor von der Whitelist löschen',
+      'Autor/in von der Whitelist löschen',
       Config.removeFromWhiteList,
       authorName
     );
   } else if (!isOwnPosting) {
     Menu.addLink(
-      'Autor zur Whitelist hinzufügen',
+      'Autor/in zur Whitelist hinzufügen',
       Config.addToWhiteList,
       authorName
     );
@@ -204,14 +204,14 @@ Menu.addAuthorLinks = function (target) {
 
   if (!isOwnPosting) {
     Menu.addLink(
-      'Autor zur Blacklist hinzufügen',
+      'Autor/in zur Blacklist hinzufügen',
       Config.addToBlackList,
       authorName
     );
   }
 
   Menu.addLink(
-    'Zeige Autoren-Statistik',
+    'Zeige Autor/innen-Statistik',
     Stats.show,
     'author'
   );
@@ -459,7 +459,7 @@ Filter.filterByAuthor = function (authorName) {
       Filter.filteredThreads.push(threadStart);
     });
   }
-  Filter.filter('Gefiltert nach Autor ' + authorName);
+  Filter.filter('Gefiltert nach Autor/in ' + authorName);
 };
 
 Filter.filterByCategory = function (categoryName) {
