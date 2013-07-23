@@ -1,4 +1,4 @@
-@charset "UTF-8";
+@charset 'UTF-8';
 
 /* ----- JavaScript-Zusätze auf der Forumshauptseite ----- */
 
@@ -6,14 +6,6 @@
 
 .javascript-button {
   cursor: pointer;
-}
-
-/* Markiere alle besuchten Posting-Links mit einer wirkungslosen CSS-Eigenschaft,
-   sodass bereits gelesene Postings auch ohne serverseitige Lesen-Markierung
-   erkannt werden */
-#root a.title:visited {
-  outline-style: solid;
-  outline-width: 0;
 }
 
 /* Kontextmenü-Layer */

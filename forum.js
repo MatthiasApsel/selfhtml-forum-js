@@ -555,11 +555,6 @@ AnswerNotice.init = function () {
       aElement = postingSpan.querySelector('span.subject a'),
       authorSpan = postingSpan.querySelector('span.author');
 
-    // Link is visited
-    if (window.getComputedStyle(aElement, null).outlineStyle == 'solid') {
-      return;
-    }
-
     answers.push({
       title : aElement.textContent,
       href : aElement.href,
