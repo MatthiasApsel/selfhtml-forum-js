@@ -1,12 +1,15 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="de" xml:lang="de">
+<!DOCTYPE html>
+<html lang="de">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta charset="utf-8">
 <title>JavaScript-Erweiterung für das SELFHTML-Forum</title>
-<style type="text/css">
+<style>
 body {
-	font-family:"Frutiger Linotype","Tahoma","Geneva","Franklin Gothic Medium","Franklin Gothic Book",verdana,sans-serif;
-	line-height:1.6;
+  margin: auto;
+  padding: 1em;
+	font-family: "Franklin Gothic Book", Verdana, sans-serif;
+	line-height: 1.6;
+  max-width:45em;
 }
 h1 {
 	font-size: 1.5em;
@@ -20,18 +23,12 @@ h2 {
 h3 {
 	font-size: 1.2em;
 }
-p {
-	max-width:45em;
-}
-p.screenshot {
-	max-width:none;
-}
 img {
 	border:1px solid #555;
 }
 code, pre {
 	font-size: inherit;
-	font-family: "Consolas","Bitstream Vera Sans Mono","Courier New",sans-serif;
+	font-family: Consolas, Monaco, 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', 'Andale Mono', 'Droid Sans Mono', 'Lucida Console', monospace;
 	color: #008;
 }
 address {
@@ -45,38 +42,15 @@ address {
 
 <h1>JavaScript-Erweiterung für das SELFHTML-Forum</h1>
 
-<h2>Einleitung</h2>
-
-<p>Das im Folgenden beschriebene <a href="forum.js">Script</a> fügt der benutzerspezifischen Ansicht (»my«) des <a href="http://forum.de.selfhtml.org/">SELFHTML-Forums</a> einige nützliche clientseitige Funktionen hinzu. Darüber hinaus soll es ein ausbaubares Framework für weitere Funktionen darstellen.</p>
-
-<p>Viele Ideen für stammen von Zapps Script <a href="http://zapp.i-networx.de">Neue Funktionen für das SELFHTML-Forum</a>. Vielen Dank an ihn!</p>
+<p>Das hier beschriebene <a href="forum.js">Script</a> fügt der benutzerspezifischen Ansicht des <a href="http://forum.de.selfhtml.org/">SELFHTML-Forums</a> einige nützliche clientseitige Funktionen hinzu. Viele Ideen für stammen von Zapps Script <a href="http://web.archive.org/web/20110830085357/http://zapp.i-networx.de/">Neue Funktionen für das SELFHTML-Forum</a>. Vielen Dank an ihn!</p>
 
 <h2>Browser-Voraussetzungen</h2>
 
-
-<p>Kurze Version: Verwenden Sie einen hinsichtlich JavaScript ausgereiften Browser wie <strong>Firefox, Safari, Chrome, Opera</strong>. Das Script funktioniert nicht im Internet Explorer.</p>
-
-<p>Lange Version:</p>
-
-<p>Der Einfachheit halber wurden aktuelle JavaScript-Techniken verwendet:</p>
-
-<ul>
-<li>W3C DOM 2 Events inkl. Capturing</li>
-<li>W3C DOM 3 XPath (<code>document.evaluate</code>)</li>
-<li>HTML 5 <code>getElementsByClassName</code></li>
-<li>W3C Selectors API (<code>querySelector</code>/<code>querySelectorAll</code>)</li>
-<li>DOMContentLoaded</li>
-<li>Prototypische Erweiterung von Kern-Objekten und DOM-Interfaces</li>
-<li>Methoden aus JavaScript 1.6 bzw. ECMAScript Ed. 5</li>
-</ul>
-
-<p>Diese Techniken werden von allen zeitgemäßen JavaScript-Interpretern unterstützt. Das Script funktioniert daher in Gecko-, Webkit- oder Presto-basierten Browsern.</p>
-
-<p>Der Internet Explorer unterstützt keine der oben genannten Techniken und hat zudem grundlegende Fehler bei der Implementierung von ECMAScript Ed. 3. Es macht keinen Spaß und keinen Sinn, für all diese Techniken IE-Workarounds zu schreiben. Daher wird der IE nicht unterstützt. Auf diese Weise konnte das Script sehr geradlinig und performant entwickelt werden.</p>
+<p>Das Script verwendet aktuelle JavaScript-Techniken und funktioniert in den aktuellen Versionen von Firefox, Chrome, Opera, Safari und Internet Explorer (Stand Juli 2013). Ältere Browser wie IE 9 werden nicht unterstützt.</p>
 
 <h2>Einbindung</h2>
 
-<p>Das Script besteht aus einer JavaScript-Datei sowie einem Stylesheet, in dem alle Regeln zur Darstellung ausgelagert sind. Script und Stylesheet müssen in den Benutzer-Einstellungen unter <a href="http://forum.de.selfhtml.org/cgi-bin/user/fo_userconf#experten">Experten-Optionen</a> eingebunden werden. Dazu werden die URIs wie folgt eingetragen:</p>
+<p>Die Funktionalität wird durch ein Script und ein zugehöriges Stylesheet bereitgestellt. Script und Stylesheet müssen in den Benutzer-Einstellungen unter <a href="http://forum.de.selfhtml.org/cgi-bin/user/fo_userconf#experten">Experten-Optionen</a> eingebunden werden. Dazu werden die URLs wie folgt eingetragen:</p>
 
 <pre>
 * CSS
@@ -101,16 +75,13 @@ address {
     > [X] Eigene Postings hervorheben
 </pre>
 
-<p>Eine Angabe von Farben ist jeweils nicht unbedingt notwendig.</p>
+<p>Eine Angabe von Farben ist sinnvoll, aber nicht notwendig für das Script.</p>
 
 <h2>Anpassung des Stylesheets</h2>
 
-<p>Alle Regeln für Darstellung sind in der besagten <code>javascript.css</code> untergebracht. Sie können sich das Script kopieren, z.B. die Größen und Farben anpassen, das angepasste Script irgendwo hochladen und dann deren URI angeben. Oder sie schreiben ein Stylesheet, dass <code>javascript.css</code> mit <code>@import</code> einbindet und gewisse Regeln überschreibt. Oder Sie binden <code>javascript.css</code> wie oben beschrieben in den Benutzereinstellungen ein und geben zusätzlich ein <a href="http://forum.de.selfhtml.org/cgi-bin/user/fo_userconf#experten">Inline-CSS</a> mit überschreibenden Regeln ein (das Inline-CSS wird nach dem externen CSS eingebunden).</p>
+<p>Alle Regeln für Darstellung sind in der Datei <code>javascript.css</code> untergebracht. Sie können sich das Script kopieren, z.B. die Größen und Farben anpassen, das angepasste Script irgendwo hochladen und dann deren URL angeben. Oder sie schreiben ein Stylesheet, dass <code>javascript.css</code> mit <code>@import</code> einbindet und gewisse Regeln überschreibt. Oder Sie binden <code>javascript.css</code> wie oben beschrieben ein und geben zusätzlich ein <a href="http://forum.de.selfhtml.org/cgi-bin/user/fo_userconf#experten">Inline-CSS</a> mit überschreibenden Regeln ein.</p>
 
-<p><code>javascript.css</code> wird bei mir (molily) in Zusammenhang mit einem allgemeinen Stylesheet für das Forum verwendet, das auf den folgenden Screenshots in Aktion zu sehen ist. Dies nimmt einige radikale Umformatierungen vor und blendet von mir nicht benötigte Elemente aus. Sie finden dieses Stylesheet unter <a href="http://molily.de/selfhtml-forum-js/forum.css">http://molily.de/selfhtml-forum-js/forum.css</a>, es bindet zu aller erst <code>javascript.css</code> ein.</p>
-
-<h2>Vorstellung der Funktionen</h2>
-
+<h2>Funktionen</h2>
 
 <h3>Kontextmenü</h3>
 
@@ -131,7 +102,6 @@ address {
 <p>Diese Kontextmenüs haben verschiedene Einträge, je nachdem, ob es sich um einen hervorgehobenen Themenbereich bzw. Autor handelt oder nicht oder ob man selbst der Autor ist. Ein Beispiel für einen hervorgehobenen Themenbereich:</p>
 
 <p class="screenshot"><img src="img/themenbereichmenue-hervorgehoben.png" alt="" /></p>
-
 
 <h3>Themenbereich- und Autorenfilter</h3>
 
@@ -186,87 +156,60 @@ address {
 
 <p class="screenshot"><img src="img/neue-antworten.png" alt="" /></p>
 
+<h2>Funktionsweise</h2>
 
-<h2>Interna, Aufbau und Konventionen</h2>
+<p>Das Script besteht aus mehreren z.T. unabhängigen Modulen. Module sind einfache Objekte. Sie müssen in der Modulverwaltung <code>Modules</code> registriert werden.</p>
 
+<p>Ein Beispielmodul für die Hauptseite:</p>
 
-<h3>Namensraum</h3>
+<pre>var MainPage = {};
+Modules.add(MainPage);
+MainPage.documentType = 'hauptseite';
+MainPage.init = function () {
+  Forum.threadList = document.getElementById('root');
+};</pre>
 
-<p>Das Script führt einen globalen Namespace <code>SELFHTML</code> mit dem Unter-Namespace <code>SELFHTML.Forum</code> ein. Alle Funktionen sind darin gekapselt und auch neue Objekte sollten unter <code>SELFHTML.Forum</code> gespeichert werden. Auf weitere globale Objekte außerhalb dieses Namensraumes wurde bewusst verzichtet &ndash; allerdings werden wie gesagt einige Prototypen erweitert.</p>
+<p>Ein Modul wird beim <code>DOMContentLoaded</code>-Event gestartet, sofern es auf den Seitentyp passt (Forumshauptseite, Postingansicht oder beides). Das Modul gibt in der <code>documentType</code>-Eigenschaft an, wann es geladen werden soll.</p>
 
-<p>In den Funktionen wird der Namensraum <code>SELFHTML.Forum</code> durch eine lokale Referenz namens <code>F</code> abgekürzt, sofern mehrere Zugriffe darauf erfolgen. Dies spart Unmengen an Tipparbeit und verbessert die Performance. Dasselbe wird beim Zugriff auf die Objekte unterhalb von <code>SELFHTML.Forum</code> getan. Manche Funktionen starten daher damit, erst einmal die Shortcuts für die angesprochenen Module anzulegen:</p>
-
-<pre>var F = SELFHTML.Forum, M = F.ContextMenu, C = F.Config, Fi = F.Filter, S = F.Statistics;</pre>
-
-
-<h3>Module und Initialisierung</h3>
-
-<p>Das Script besteht aus Modulen, die Initialisierungsfunktionen bereitstellen. Diese werden folgendermaßen registriert:</p>
-
-<pre>
-SELFHTML.Forum.addModule("all", SELFHTML.Forum.Beispielmodul1); // für Hauptseite und Posting-Ansicht
-SELFHTML.Forum.addModule("hauptseite", SELFHTML.Forum.Beispielmodul2); // nur für Hauptseite
-SELFHTML.Forum.addModule("nachricht", SELFHTML.Forum.Beispielmodul3); // nur für Posting-Ansicht
-</pre>
-
-<p>Es wird erwartet, dass an den angegebenen Modul-Objekten eine Initialisierungsfunktionen namens <code>init</code> existiert. Diese wird ausgeführt, wenn das Ereignis <code>DOMContentLoaded</code> passiert, d.h. der DOM-Knotenbaum für den Scriptzugriff zur Verfügung steht.</p>
-
+<p>Ein Modul muss eine <code>init</code>-Funktion bereitstellen, über die es gestartet wird.</p>
 
 <h3>Indizes</h3>
 
-<p>Für die Filterung und die Statistik werden beim Start vier Indizes angelegt (siehe Funktion <code>SELFHTML.Forum.ThreadListCache.init</code>). Sie enthalten jeweils Referenzen auf die <code>li</code>-Elemente im DOM.</p>
+<p>Für die Filterung und die Statistik werden beim Start vier Indizes angelegt. Sie enthalten jeweils Referenzen auf die <code>li</code>-Elemente im DOM.</p>
 
 <pre>
-F.postingsByAuthor = {}
-F.threadStartsByAuthor = {}
-F.ownPostings = []
-F.postingsByCategory = {}
+Forum.postingsByAuthor = {};
+Forum.threadStartsByAuthor = {};
+Forum.ownPostings = [];
+Forum.postingsByCategory = {};
 </pre>
 
-<p>In den beiden Objects <code>postingsByAuthor</code> und <code>postingsByCategory</code> werden die Postings nach Autornamen respektive Themenbereichen gespeichert. Beispielsweise unter <code>F.postingsByAuthor["molily"]</code> findet sich ein Array mit allen <code>li</code>-Elementobjekten der Postings, die der Autor »molily« verfasst hat. Unter <code>F.postingsByCategory["JAVASCRIPT"]</code> findet sich entsprechend ein Array mit allen Postings des Themenbereichs »JAVASCRIPT«.</p>
+<p>In den beiden Objects <code>postingsByAuthor</code> und <code>postingsByCategory</code> werden die Postings nach Autornamen bzw. Themenbereichen gespeichert. Unter <code>Forum.postingsByAuthor['molily']</code> findet sich beispielweise ein Array mit allen <code>li</code>-Elemente der Postings, die der Autor »molily« verfasst hat. Unter <code>Forum.postingsByCategory['JAVASCRIPT']</code> findet sich ein Array mit allen Postings des Themenbereichs »JAVASCRIPT«.</p>
 
-<p>Im Object <code>F.threadStartsByAuthor</code> finden sich alle Beiträge, die einen Thread eröffnet haben, nach Autornamen sortiert. Es handelt sich ebenfalls um Arrays mit <code>li</code>-Elementobjekten. <code>F.ownPostings</code> ist schließlich ein Array mit eigenen Postings, ebenfalls in Form von <code>li</code>-Elementen.</p>
-
-
-<h3>Prototypische Erweiterungen</h3>
-
-<p>Alle <code>Array</code>-Objekte und Knotenlisten (Konstruktor <code>NodeList</code>) bekommen die <a href="http://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Objects/Array/forEach">JavaScript-1.6-Methode forEach</a> zum einfachen Durchlaufen der Elemente. Die Methode nimmt eine Funktion entgegen, die für jedes Element ausgeführt wird. Auf konventionelle <code>for</code>-Schleifen wird daher verzichtet zugunsten dieser funktionalen Schreibweise. Neuere Browser bringen diese Methode bereits von Haus aus mit.</p>
-
-<p>Dasselbe gilt für Objects (Hashes). Diese werden nicht mit <code>for-in</code> durchlaufen, sondern mit der »statischen Klassenmethode« <code>Object.forEach</code>. Da die prototypische Erweiterung aller Objekte über <code>Object.prototype</code> problematisch ist, wurde diese Herangehensweise gewählt. Die verwendete Methode ist »sicher«, weil sie prototypisch vererbte Member überspringt. <code>for-in</code>-Schleifen kommen dadurch außerhalb dieser Helfermethode nicht vor.</p>
-
-<p>Schließlich werden Elementknoten erweitert um die Methoden <code>toggleClass</code>, <code>addClass</code>, <code>removeClass</code> und <code>hasClass</code>. Deren Sinn erklärt sich von selbst, es ist ein komfortableres Interface zur <code>className</code>-Eigenschaft. Darüber hinaus bekommt jedes Element die Methoden <code>getElementByXPath</code> und <code>getElementsByXPath</code>, mit der sich die Kindknoten mithilfe einer XPath-Abfrage durchsuchen lassen.</p>
-
+<p>Im Object <code>Forum.threadStartsByAuthor</code> finden sich alle Beiträge, die einen Thread eröffnet haben, nach Autornamen sortiert. Es handelt sich ebenfalls um Arrays mit <code>li</code>-Elemente. <code>Forum.ownPostings</code> ist schließlich ein Array mit eigenen Postings, ebenfalls in Form von <code>li</code>-Elementen.</p>
 
 <h3>Layer</h3>
 
-<p>Das Ansprechen und Einfügen von Elementen sowie das Ändern ihres Inhaltes erfolgt über eine OOP-Abstraktion namens Layer. <code>F.Layer</code> ist ein Konstruktor, der z.B. so aufgerufen wird:</p>
+<p>Das Ansprechen und Einfügen von Elementen sowie das Ändern ihres Inhaltes erfolgt über eine Abstraktion namens Layer. Die Funktion <code>createLayer</code> gibt ein Objekt vom Typ <code>Layer</code> zurück. Es erzeugt ein Element mit der angegebenen ID und fügt es an der angegebenen Stelle im DOM ein:</p>
 
 <pre>
-new SELFHTML.Forum.Layer({
-    id : "scriptInfo",
-    tagName : "div",
-    parent : document.getElementById("kopf-haupt")
-}).html(html).show();
+var layer = createLayer({
+  id: 'filter-status',
+  parent: document.getElementById('beschreibung')
+});
+layer.html(infoText).show();
+layer.element.addEventListener('click', Filter.checkRemoveFilter, false);
 </pre>
 
-<p>Dies erzeugt ein Element vom angegebenen Typ mit der angegebenen ID und hängt es als angegebenen Eltern-Element ins Dokument ein. Wenn schon ein Layer mit der ID angelegt wurde, gibt der Konstruktor das entsprechende Layer-Objekt zurück, anstatt ein zweites gleiches Element zu erzeugen. Der obige Befehl kann also gefahrlos mehrfach aufgerufen werden.</p>
+<p>Wenn schon ein Layer mit der ID angelegt wurde, gibt die Funktion das vorhandene Layer-Objekt zurück. Der obige Befehl kann also gefahrlos mehrfach aufgerufen werden.</p>
 
-<p>Das Layer-Objekt hat die Methoden <code>show</code>, <code>hide</code> und <code>html</code>. Die ersten beiden erklären sich von selbst; mit <code>.html("string")</code> wird die <code>innerHTML</code>-Eigenschaft gesetzt. Die Methoden erlauben »Chaining«, wie man sieht, d.h. sie geben die Layer-Instanz wieder zurück.</p>
-
-<p>Will man nur ein bestehendes Element verstecken oder seinen Inhalt ändern, so ruft man ebenfalls den Konstruktor auf, allerdings nur mit einer ID:</p>
-
-<pre>
-new SELFHTML.Forum.Layer( { id : "scriptInfo" } ).hide();
-</pre>
-
-<p>Wenn das Element nicht existiert, passiert einfach gar nichts.</p>
-
+<p>Das Layer-Objekt hat die Methoden <code>show</code>, <code>hide</code>, <code>html</code> und <code>remove</code>. Die ersten beiden erklären sich von selbst. Mit <code>.html('string')</code> wird die <code>innerHTML</code>-Eigenschaft gesetzt. <code>remove</code> entfernt das Element dauerhaft aus dem DOM. Die Methoden erlauben Verkettung (Chaining), d.h. sie geben die Layer-Instanz zurück.</p>
 
 <h2>Feedback und Weiterentwicklung</h2>
 
 <p>Vorschläge für weitere Features, Anpassungen und Code-Ergänzungen werden gerne ins Script aufgenommen.</p>
 
-<p>Der Code des Scripts wird über Github verwaltet. Die Projektadresse: <a href="https://github.com/molily/selfhtml-forum-js/tree">github.com/molily/selfhtml-forum-js</a>. Sie können das Projekt dort herunterladen, mit dem Versionsverwaltungsprogramm Git »auschecken« oder das Projekt forken (abspalten), um Verbesserungen einzupflegen und zur Weiterentwicklung beizutragen.</p>
+<p>Der Code des Scripts wird <a href="https://github.com/molily/selfhtml-forum-js">auf GitHub verwaltet</a>. Sie können das Projekt mit der <a href="http://git-scm.com/">Versionsverwaltung Git</a> herunterladen und bearbeiten, um Verbesserungen einzupflegen und zur Weiterentwicklung beizutragen.</p>
 
 <address>molily, <a href="mailto:zapperlott@gmail.com">zapperlott@gmail.com</a></address>
 
