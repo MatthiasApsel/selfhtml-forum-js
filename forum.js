@@ -50,9 +50,11 @@ var escapeHTML = function (string) {
 
 var slice = Array.prototype.slice;
 
-Array.from = function (list) {
-  return slice.call(list);
-};
+if (!Array.from) {
+  Array.from = function (list) {
+    return slice.call(list);
+  };
+}
 
 // ####################################################################################
 
