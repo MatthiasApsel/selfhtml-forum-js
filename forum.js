@@ -10,6 +10,27 @@ Lizenz: MIT License
 
 // ####################################################################################
 
+// Check browser support
+
+var
+  div = document.createElement('div'),
+  supported =
+    div.querySelector && div.querySelectorAll &&
+    div.classList && div.classList.contains &&
+    div.textContent === '' &&
+    div.addEventListener &&
+    window.getComputedStyle;
+
+if (!supported) {
+  if (window.console && console.log) {
+    console.log('JavaScript-Erweitungen: Sie verwenden einen nicht unterstützten Browser. Bitte verwenden Sie eine aktuelle Browserversion.');
+  }
+  return;
+}
+div = undefined;
+
+// ####################################################################################
+
 // Helfer
 
 var forEach = function (object, func) {
