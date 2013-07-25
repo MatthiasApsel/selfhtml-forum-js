@@ -744,9 +744,9 @@ Sorting.init = function () {
   elem.innerHTML =
     '<h2>Sortierung der Threads:</h2>' +
     '<ul>' +
-    '<li><label><input type="radio" name="sorting" value="descending"> Absteigend (Standard)</label></li>' +
+    '<li><label><input type="radio" name="sorting" value="newestfirst"> Nach jüngstem Posting (Standard)</label></li>' +
+    '<li><label><input type="radio" name="sorting" value="descending"> Absteigend</label></li>' +
     '<li><label><input type="radio" name="sorting" value="ascending"> Aufsteigend</label></li>' +
-    '<li><label><input type="radio" name="sorting" value="newestfirst"> Nach jüngstem Posting</label></li>' +
     '</ul>';
   elem.addEventListener('click', Sorting.change, false);
   parent.appendChild(elem);
