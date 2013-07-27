@@ -616,7 +616,7 @@ Config.init = function () {
 };
 
 Config.sendUserConfAction = function (action, directive, value) {
-  var obj = Config.directives[directive];
+  var obj = Config.directives[action];
   if (!obj) return;
   var url =
     window.userconf_uri +
