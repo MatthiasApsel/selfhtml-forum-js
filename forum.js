@@ -20,7 +20,8 @@ var
     div.textContent === '' &&
     div.addEventListener &&
     window.getComputedStyle &&
-    window.XMLHttpRequest;
+    window.XMLHttpRequest &&
+    Function.prototype.bind;
 
 if (!supported) {
   if (window.console && console.log) {
@@ -606,18 +607,17 @@ Config.init = function () {
   forEach(Config.directives, function (directive, obj) {
     if (obj.type != 'list') return;
     Config['addTo' + directive] = function (value) {
-      Config.setValue(directive, value);
-      Config.confirmReload();
+      Config.setValue(directive, value, Config.confirmReload);
     };
     Config['removeFrom' + directive] = function (value) {
-      Config.removeValue(directive, value);
-      Config.confirmReload();
+      Config.removeValue(directive, value, Config.confirmReload);
     };
   });
 };
 
-Config.sendUserConfAction = function (action, directive, value) {
-  var obj = Config.directives[action];
+Config.sendUserConfAction = function (action, directive, value, handler) {
+  console.log('sendUserConfAction', arguments);
+  var obj = Config.directives[directive];
   if (!obj) return;
   var url =
     window.userconf_uri +
@@ -627,17 +627,16 @@ Config.sendUserConfAction = function (action, directive, value) {
     (obj.type == 'list' ? '&type=stringlist' : '') +
     '&unique=' + new Date().getTime();
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', url, false);
+  console.log('GET', url);
+  xhr.open('GET', url);
+  if (handler) {
+    xhr.onload = handler;
+  }
   xhr.send();
 };
 
-Config.setValue = function (directive, value) {
-  Config.sendUserConfAction(directive, 'setvalue', value);
-};
-
-Config.removeValue = function (directive, value) {
-  Config.sendUserConfAction(directive, 'removevalue', value);
-};
+Config.setValue = Config.sendUserConfAction.bind(null, 'setvalue');
+Config.removeValue = Config.sendUserConfAction.bind(null, 'removevalue');
 
 Config.confirmReload = function () {
   var reloadDialog = 'Die Einstellung wurde auf dem Server gespeichert. Soll die Forumshauptseite jetzt neu geladen werden?';
@@ -761,8 +760,7 @@ Sorting.change = function (e) {
     return;
   }
   e.stopPropagation();
-  Config.setValue('SortThreads', target.value);
-  Config.confirmReload();
+  Config.setValue('SortThreads', target.value, Config.confirmReload);
 };
 
 // ####################################################################################
