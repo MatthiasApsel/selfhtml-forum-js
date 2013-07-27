@@ -641,7 +641,7 @@ Config.removeValue = function (directive, value) {
 Config.confirmReload = function () {
   var reloadDialog = 'Die Einstellung wurde auf dem Server gespeichert. Soll die Forumshauptseite jetzt neu geladen werden?';
   if (window.confirm(reloadDialog)) {
-    location.reload();
+    location.reload(true);
   }
 };
 
