@@ -626,7 +626,7 @@ Config.sendUserConfAction = function (action, directive, value) {
     (obj.type == 'list' ? '&type=stringlist' : '') +
     '&unique=' + new Date().getTime();
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', url);
+  xhr.open('GET', url, false);
   xhr.send();
 };
 
