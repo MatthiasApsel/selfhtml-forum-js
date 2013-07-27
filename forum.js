@@ -19,7 +19,8 @@ var
     div.classList && div.classList.contains &&
     div.textContent === '' &&
     div.addEventListener &&
-    window.getComputedStyle;
+    window.getComputedStyle &&
+    window.XMLHttpRequest;
 
 if (!supported) {
   if (window.console && console.log) {
