@@ -616,7 +616,6 @@ Config.init = function () {
 };
 
 Config.sendUserConfAction = function (action, directive, value, handler) {
-  console.log('sendUserConfAction', arguments);
   var obj = Config.directives[directive];
   if (!obj) return;
   var url =
@@ -627,7 +626,6 @@ Config.sendUserConfAction = function (action, directive, value, handler) {
     (obj.type == 'list' ? '&type=stringlist' : '') +
     '&unique=' + new Date().getTime();
   var xhr = new XMLHttpRequest();
-  console.log('GET', url);
   xhr.open('GET', url);
   if (handler) {
     xhr.onload = handler;
