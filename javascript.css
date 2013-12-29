@@ -141,7 +141,9 @@ li.highlighted > span.posting {
   font-weight: bold;
 }
 
-#change-thread-sorting p, #change-thread-sorting ul, #change-thread-sorting li {
+#change-thread-sorting p,
+#change-thread-sorting ul,
+#change-thread-sorting li {
   display: inline;
 }
 
