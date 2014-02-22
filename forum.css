@@ -1,45 +1,31 @@
-@charset 'UTF-8';
+@charset "utf-8";
 
 /* Binde Stylesheet für JavaScript-Gimmicks ein */
 
 @import url(javascript.css);
 
-/* Kopf */
-
-/* Threadliste (Forumshauptseite und Thread-Ansicht) */
-
-#selfforum-hauptseite #top,
-#aktuellenachrichten,
-.answers {
-  display: none;
-}
-
 /* Forumshauptseite */
 
-#altenachrichten {
+#selfforum-hauptseite #top,
+#selfforum-hauptseite #kopf,
+#aktuellenachrichten,
+#altenachrichten,
+/* Anzahl der Antworten im Thread */
+#selfforum-hauptseite .answers {
   display: none;
 }
 
 /* Postingansicht */
 
-#selfforum-nachricht #kopf {
-  margin: 0;
-  background-image: none;
-}
-
-#selfforum-nachricht #kopf ul {
+#selfforum-nachricht .socialllinks {
   display: none;
 }
 
-#selfforum-nachricht #kopf h1 {
-  position: static;
-  margin: 0;
-}
-
 .nachricht-section {
-  border: none;
+  border: 0;
   padding: 0;
-  max-width: 60em;
+  width: auto;
+  max-width: 65em;
   background-color: transparent;
 }
 
@@ -48,8 +34,9 @@
 }
 
 .nachricht-text {
-  width: auto;
+  margin: 0;
   padding: 1.5em;
+  width: auto;
 }
 
 .nachricht-text,

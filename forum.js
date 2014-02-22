@@ -24,8 +24,8 @@ var
     Function.prototype.bind;
 
 if (!supported) {
-  if (window.console && console.log) {
-    console.log('JavaScript-Erweitungen: Sie verwenden einen nicht unterstützten Browser. Bitte verwenden Sie eine aktuelle Browserversion.');
+  if (window.console && console.error) {
+    console.error('JavaScript-Erweitungen: Sie verwenden einen nicht unterstützten Browser. Bitte verwenden Sie eine aktuelle Browserversion.');
   }
   return;
 }
@@ -78,7 +78,7 @@ Modules.init = function () {
   });
 };
 
-document.addEventListener('DOMContentLoaded', Modules.init, false);
+document.addEventListener('DOMContentLoaded', Modules.init);
 
 // ####################################################################################
 
@@ -163,17 +163,12 @@ ThreadCache.analyzePosting = function (authorSpan) {
   }
 
   // Save category
-  var category = postingSpan
-    .firstChild // span.subject
-    .firstChild // span.category
-    .childNodes[1] // second text node
-    .nodeValue;
+  var category = postingSpan.querySelector('.category').textContent;
   postings = Forum.postingsByCategory[category];
   if (!postings) {
     postings = Forum.postingsByCategory[category] = [];
   }
   postings.push(li);
-
 };
 
 // ####################################################################################
@@ -187,8 +182,48 @@ Menu.init = function () {
   Menu.target = document.getElementById('context-menu-title');
   Menu.visible = false;
   Menu.links = null;
-  Forum.threadList.addEventListener('click', Menu.toggle, false);
-  Forum.threadList.addEventListener('mouseenter', Menu.threadListMouseEnter, true);
+  Forum.threadList.addEventListener('contextmenu', Menu.toggle);
+  document.body.addEventListener('click', Menu.hide);
+};
+
+
+Menu.addLinks = function (target, linkType) {
+  Menu.links = [];
+
+  if (linkType == 'author') {
+    Menu.addAuthorLinks(target);
+  } else if (linkType == 'category') {
+    Menu.addCategoryLinks(target);
+  }
+
+  Menu.addLink('Schließen', Menu.hide);
+
+  return Menu.links;
+};
+
+Menu.toggle = function (event) {
+  var
+    target = event.target,
+    isAuthor = target.classList.contains('author'),
+    isNormalCategory = target.classList.contains('category'),
+    isHighlightedCategory = target.classList.contains('cathigh'),
+    isCategory = isNormalCategory || isHighlightedCategory,
+    linkType = isAuthor ? 'author' : (isCategory ? 'category' : false);
+
+  if (linkType) {
+    event.preventDefault();
+    // Remove possible selection
+    if (window.getSelection) {
+      var selection = window.getSelection();
+      if (selection.removeAllRanges) {
+        selection.removeAllRanges();
+      }
+    }
+    Menu.addLinks(target, linkType);
+    Menu.show(target);
+  } else {
+    Menu.hide();
+  }
 };
 
 Menu.addLink = function (title, handler) {
@@ -243,8 +278,8 @@ Menu.addAuthorLinks = function (target) {
 };
 
 Menu.addCategoryLinks = function (target) {
-  var categoryName = target.childNodes[1].nodeValue,
-    isNormalCategory = target.classList.contains('category');
+  var categoryName = target.textContent,
+    isHighlighted = target.classList.contains('cathigh');
 
   Menu.addLink(
     'Filtere nach Themenbereich',
@@ -252,16 +287,16 @@ Menu.addCategoryLinks = function (target) {
     categoryName
   );
 
-  if (isNormalCategory) {
+  if (isHighlighted) {
     Menu.addLink(
-      'Themenbereich hervorheben',
-      Config.addToHighlightedCategories,
+      'Themenbereich nicht mehr hervorheben',
+      Config.removeFromHighlightedCategories,
       categoryName
     );
   } else {
     Menu.addLink(
-      'Themenbereich nicht mehr hervorheben',
-      Config.removeFromHighlightedCategories,
+      'Themenbereich hervorheben',
+      Config.addToHighlightedCategories,
       categoryName
     );
   }
@@ -271,42 +306,6 @@ Menu.addCategoryLinks = function (target) {
     Stats.show,
     'category'
   );
-};
-
-Menu.determineLinks = function (target, linkType) {
-
-  Menu.links = [];
-
-  if (linkType == 'author') {
-    Menu.addAuthorLinks(target);
-  } else if (linkType == 'category') {
-    Menu.addCategoryLinks(target);
-  }
-
-  Menu.addLink('Schließen', Menu.hide);
-
-  return Menu.links;
-};
-
-Menu.toggle = function (e) {
-  var
-    target = e.target,
-    isAuthor = target.classList.contains('author'),
-    isNormalCategory = target.classList.contains('category'),
-    isHighlightedCategory = target.classList.contains('cathigh'),
-    isCategory = isNormalCategory || isHighlightedCategory,
-    linkType = isAuthor ? 'author' : (isCategory ? 'category' : false);
-
-  if (linkType) {
-    if (Menu.visible) {
-      Menu.hide();
-    } else {
-      Menu.determineLinks(target, linkType);
-      Menu.show(target);
-    }
-  } else {
-    Menu.hide();
-  }
 };
 
 Menu.show = function (target) {
@@ -319,23 +318,25 @@ Menu.show = function (target) {
     layer = createLayer({ id: 'context-menu', tagName: 'ul' }),
     ul = layer.element;
 
+  // Lösche vorhandenen Inhalt
   ul.innerHTML = '';
 
+  // Erzeuge Links
   Menu.links.forEach(function (link) {
-    var handler = function (e) {
-      e.preventDefault();
+    var handler = function (event) {
+      event.preventDefault();
       link.handler();
     };
     var li = document.createElement('li');
     var a = document.createElement('a');
     li.appendChild(a);
     a.href = '';
-    a.addEventListener('click', handler, false);
+    a.addEventListener('click', handler);
     a.appendChild(document.createTextNode(link.title));
     ul.appendChild(li);
   });
   ul.style.top = (target.offsetTop + target.offsetHeight) + 'px';
-  ul.style.left = target.offsetLeft + 'px';
+  ul.style.left = target.offsetLeft - 1 + 'px';
   layer.show();
   Menu.target = target;
 };
@@ -347,16 +348,6 @@ Menu.hide = function () {
   var layer = getLayer('context-menu');
   if (layer) {
     layer.hide();
-  }
-};
-
-Menu.threadListMouseEnter = function (e) {
-  var
-    target = e.target,
-    classList = target.classList;
-  if (classList.contains('author') || classList.contains('category') ||
-    classList.contains('cathigh')) {
-    classList.add('javascript-button');
   }
 };
 
@@ -440,8 +431,8 @@ Filter.init = function () {
   Filter.initCategoryFilter();
 };
 
-Filter.formSubmit = function (e) {
-  e.preventDefault();
+Filter.formSubmit = function (event) {
+  event.preventDefault();
   var select = this.elements.lf,
     selectedOption = select.options[select.selectedIndex],
     categoryName = selectedOption.text;
@@ -454,12 +445,12 @@ Filter.formSubmit = function (e) {
 
 Filter.initCategoryFilter = function () {
   var form = document.getElementById('themenfilter').getElementsByTagName('form')[0];
-  form.addEventListener('submit', Filter.formSubmit, false);
+  form.addEventListener('submit', Filter.formSubmit);
 };
 
 Filter.filter = function (infoText) {
   Menu.hide();
-  Forum.threadList.classList.add('filter');
+  Forum.threadList.classList.add('filtered');
   infoText = infoText + ' &ndash; ' +
     '<a href="" class="remove-posting-filter">Filter entfernen</a>';
   var layer = createLayer({
@@ -467,7 +458,7 @@ Filter.filter = function (infoText) {
     parent: document.getElementById('beschreibung')
   });
   layer.html(infoText).show();
-  layer.element.addEventListener('click', Filter.checkRemoveFilter, false);
+  layer.element.addEventListener('click', Filter.checkRemoveFilter);
   Filter.active = true;
 };
 
@@ -475,11 +466,11 @@ Filter.filterByAuthor = function (authorName) {
   Filter.remove();
   var postings = Forum.postingsByAuthor[authorName];
   if (postings) {
-    postings.forEach(function (li) {
-      li.classList.add('highlighted');
-      Filter.highlightedPostings.push(li);
+    postings.forEach(function (postingSpan) {
+      postingSpan.classList.add('highlighted');
+      Filter.highlightedPostings.push(postingSpan);
 
-      var threadStart = Forum.getThreadStart(li);
+      var threadStart = Forum.getThreadStart(postingSpan);
       threadStart.classList.add('contains-filter-postings');
       Filter.filteredThreads.push(threadStart);
     });
@@ -502,9 +493,9 @@ Filter.filterByCategory = function (categoryName) {
   Filter.filter('Gefiltert nach Themenbereich ' + categoryName);
 };
 
-Filter.checkRemoveFilter = function (e) {
-  e.preventDefault();
-  if (e.target.classList.contains('remove-posting-filter')) {
+Filter.checkRemoveFilter = function (event) {
+  event.preventDefault();
+  if (event.target.classList.contains('remove-posting-filter')) {
     Filter.remove();
   }
 };
@@ -518,12 +509,12 @@ Filter.remove = function () {
   while (threadStart = Filter.filteredThreads.shift()) {
     threadStart.classList.remove('contains-filter-postings');
   }
-  var li;
-  while (li = Filter.highlightedPostings.shift()) {
-    li.classList.remove('highlighted');
+  var postingSpan;
+  while (postingSpan = Filter.highlightedPostings.shift()) {
+    postingSpan.classList.remove('highlighted');
   }
 
-  Forum.threadList.classList.remove('filter');
+  Forum.threadList.classList.remove('filtered');
 
   Filter.active = false;
 };
@@ -552,16 +543,17 @@ AnswerNotice.init = function () {
 
   var answers = [];
 
-  answerElements.forEach(function (postingSpan) {
+  var answers = answerElements.map(function (postingSpan) {
     var
-      aElement = postingSpan.querySelector('span.subject a'),
-      authorSpan = postingSpan.querySelector('span.author');
+      aElement = postingSpan.querySelector('a'),
+      titleSpan = postingSpan.querySelector('.title'),
+      authorSpan = postingSpan.querySelector('.author');
 
-    answers.push({
-      title : aElement.textContent,
-      href : aElement.href,
-      author : authorSpan.textContent
-    });
+    return {
+      title: titleSpan.textContent,
+      href: aElement.href,
+      author: authorSpan.textContent
+    };
   });
 
   if (answers.length == 0) return;
@@ -700,14 +692,14 @@ Stats.show = function (type) {
     id: 'stats',
     className: type + 'Stats'
   });
-  layer.element.addEventListener('click', Stats.click, false);
+  layer.element.addEventListener('click', Stats.click);
   layer.html(html).show();
 };
 
-Stats.click = function (e) {
-  var target = e.target;
+Stats.click = function (event) {
+  var target = event.target;
   if (target.tagName != 'A') return;
-  e.preventDefault();
+  event.preventDefault();
   Stats.hide();
   if (target.classList.contains('hide')) return;
   var filter;
@@ -746,18 +738,18 @@ Sorting.init = function () {
     '<li><label><input type="radio" name="sorting" value="descending"> Absteigend</label></li>' +
     '<li><label><input type="radio" name="sorting" value="ascending"> Aufsteigend</label></li>' +
     '</ul>';
-  elem.addEventListener('click', Sorting.change, false);
+  elem.addEventListener('click', Sorting.change);
   parent.appendChild(elem);
 };
 
-Sorting.change = function (e) {
+Sorting.change = function (event) {
   var
-    target = e.target,
+    target = event.target,
     targetName = target.nodeName.toLowerCase();
   if (targetName != 'input') {
     return;
   }
-  e.stopPropagation();
+  event.stopPropagation();
   Config.setValue('SortThreads', target.value, Config.confirmReload);
 };
 

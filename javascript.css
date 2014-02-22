@@ -1,12 +1,6 @@
-@charset 'UTF-8';
+@charset "utf-8";
 
 /* ----- JavaScript-Zusätze auf der Forumshauptseite ----- */
-
-/* Klickbare Elemente */
-
-.javascript-button {
-  cursor: pointer;
-}
 
 /* Kontextmenü-Layer */
 
@@ -32,24 +26,26 @@
 }
 
 #context-menu-title {
-  padding: 0 0.5em;
+  padding: 1px 5px;
   color: white;
   background-color: #999;
   font-weight: normal;
-  /* background-color: #f5f5f7; */
 }
 
 /* Filter */
 
-#root.filter > li {
+/* Zeige nur markierte Threads */
+
+#root.filtered > li {
   display: none;
 }
 
-#root.filter > li.contains-filter-postings {
+#root.filtered > li.contains-filter-postings {
   display: block;
 }
 
-li.highlighted > span.posting {
+.posting.highlighted {
+  display: block;
   background-color: #fffae0 !important;
 }
 
