@@ -165,7 +165,7 @@ ThreadCache.analyzePosting = function (postingSpan) {
   }
 
   // Save posting by category
-  var categorySpan = postingSpan.querySelector('.category');
+  var categorySpan = postingSpan.querySelector('.category, .cathigh');
   if (categorySpan) {
     var category = categorySpan.textContent;
 
