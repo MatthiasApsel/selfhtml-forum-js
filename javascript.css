@@ -44,9 +44,9 @@
   display: block;
 }
 
-.posting.highlighted {
-  display: block;
-  background-color: #fffae0 !important;
+.highlighted > .posting {
+  padding: 0 2em;
+  background-color: #fff5da !important;
 }
 
 #filter-status {

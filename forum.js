@@ -126,32 +126,13 @@ Modules.add(ThreadCache);
 ThreadCache.documentType = 'hauptseite';
 
 ThreadCache.init = function () {
-  var elements = Forum.threadList.querySelectorAll('.author');
-  elements = Array.from(elements);
-  elements.forEach(ThreadCache.analyzePosting);
+  var elements = Forum.threadList.querySelectorAll('.posting');
+  Array.from(elements).forEach(ThreadCache.analyzePosting);
 };
 
-ThreadCache.analyzePosting = function (authorSpan) {
-  var author = authorSpan.textContent,
-    postingSpan = authorSpan.parentNode,
-    li = postingSpan.parentNode,
-    parentLi = li.parentNode.parentNode;
-
-  // Save own postings
-  if (li.classList.contains('own-posting')) {
-    Forum.ownPostings.push(li);
-    // Save own name
-    if (!Forum.ownName) {
-      Forum.ownName = author;
-    }
-  }
-
-  // Save author
-  var postings = Forum.postingsByAuthor[author];
-  if (!postings) {
-    postings = Forum.postingsByAuthor[author] = [];
-  }
-  postings.push(li);
+ThreadCache.analyzePosting = function (postingSpan) {
+  var li = postingSpan.parentNode;
+  var parentLi = li.parentNode.parentNode;
 
   // Save thread start
   if (parentLi.classList.contains('thread-start')) {
@@ -162,13 +143,38 @@ ThreadCache.analyzePosting = function (authorSpan) {
     threadStarts.push(parentLi);
   }
 
-  // Save category
-  var category = postingSpan.querySelector('.category').textContent;
-  postings = Forum.postingsByCategory[category];
-  if (!postings) {
-    postings = Forum.postingsByCategory[category] = [];
+  // Save posting by author
+  var authorSpan = postingSpan.querySelector('.author');
+  if (authorSpan) {
+    var author = authorSpan.textContent;
+
+    var postingsByAuthor = Forum.postingsByAuthor[author];
+    if (!postingsByAuthor) {
+      postingsByAuthor = Forum.postingsByAuthor[author] = [];
+    }
+    postingsByAuthor.push(li);
+
+    // Save own postings
+    if (authorSpan.classList.contains('own-posting')) {
+      Forum.ownPostings.push(li);
+      // Save own name
+      if (!Forum.ownName) {
+        Forum.ownName = author;
+      }
+    }
   }
-  postings.push(li);
+
+  // Save posting by category
+  var categorySpan = postingSpan.querySelector('.category');
+  if (categorySpan) {
+    var category = categorySpan.textContent;
+
+    var postingsByCategory = Forum.postingsByCategory[category];
+    if (!postingsByCategory) {
+      postingsByCategory = Forum.postingsByCategory[category] = [];
+    }
+    postingsByCategory.push(li);
+  }
 };
 
 // ####################################################################################
