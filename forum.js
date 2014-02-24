@@ -575,7 +575,7 @@ AnswerNotice.init = function () {
 
   var divHTML = '';
   divHTML +=
-    '<h2>Neue Antworten</h2>' +
+    '<h3>Neue Antworten</h3>' +
     '<ul>';
   answers.forEach(function (answer) {
     divHTML +=
@@ -740,7 +740,7 @@ Sorting.init = function () {
   var elem = document.createElement('div');
   elem.id = 'change-thread-sorting';
   elem.innerHTML =
-    '<h2>Sortierung der Threads:</h2>' +
+    '<h3>Sortierung der Threads</h3>' +
     '<ul>' +
     '<li><label><input type="radio" name="sorting" value="newestfirst"> Nach jüngstem Posting (Standard)</label></li>' +
     '<li><label><input type="radio" name="sorting" value="descending"> Absteigend</label></li>' +
