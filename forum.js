@@ -437,9 +437,16 @@ Filter.init = function () {
   Filter.initCategoryFilter();
 };
 
+Filter.initCategoryFilter = function () {
+  var form = document.querySelector('#themenfilter form');
+  form.addEventListener('submit', Filter.formSubmit);
+  var select = form.querySelector('select');
+  select.addEventListener('change', Filter.formSubmit);
+};
+
 Filter.formSubmit = function (event) {
   event.preventDefault();
-  var select = this.elements.lf,
+  var select = document.querySelector('#themenfilter select'),
     selectedOption = select.options[select.selectedIndex],
     categoryName = selectedOption.text;
   if (selectedOption.value) {
@@ -447,11 +454,6 @@ Filter.formSubmit = function (event) {
   } else {
     Filter.remove();
   }
-};
-
-Filter.initCategoryFilter = function () {
-  var form = document.getElementById('themenfilter').getElementsByTagName('form')[0];
-  form.addEventListener('submit', Filter.formSubmit);
 };
 
 Filter.filter = function (infoText) {
